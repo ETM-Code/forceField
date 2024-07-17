@@ -1,12 +1,8 @@
-import {Text, View, Button, Linking, Platform, StyleSheet, TouchableOpacity} from 'react-native';
-// import { Stack } from 'expo-router';
-import React, { useEffect, useState} from 'react';
+import { Text, View, Linking, Platform, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import 'nativewind';
-import { Link, useRouter } from 'expo-router';
+import { Link, useRouter, useSegments } from 'expo-router';
 import { NetworkInfo } from 'react-native-network-info';
-
-
-
 
 const openWifiSettings = () => {
   if (Platform.OS === 'ios') {
@@ -16,37 +12,29 @@ const openWifiSettings = () => {
   }
 };
 
-// const checkWiFiAndNavigate = (router) => {
-//   NetworkInfo.getSSID().then(ssid => {
-//     if (ssid.includes('Field')) {
-//       router.push('./teamPage');
-//     }
-//   });
-// };
-
-
-
-
 export default function Page() {
   const router = useRouter();
+  const segments = useSegments();
 
   useEffect(() => {
     const checkSSID = async () => {
       try {
         const ssid = await NetworkInfo.getSSID();
-        if (ssid && ssid.includes('Field')) {
+        if (ssid && ssid.includes('Field') && segments[0] !== 'teamPage') {
           router.push('./teamPage');
         }
       } catch (error) {
         console.error('Error getting SSID:', error);
+        // if (segments[0] !== 'teamPage'){
+        //   router.push('./teamPage');
+        // }
       }
     };
 
     const intervalId = setInterval(checkSSID, 100);
 
     return () => clearInterval(intervalId);
-  }, [router]);
-
+  }, [router, segments]);
 
   return( 
 
@@ -62,6 +50,7 @@ export default function Page() {
       </View>
 
         <View className="align-bottom bg-gray-300 mt-40 text-center items-center mx-20">
+          {/* <Link href='./teamPageLegacy'>Go to team page</Link> */}
           <Link href='./teamPage'>Go to team page</Link>
         </View>
 

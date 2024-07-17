@@ -7,6 +7,7 @@ interface TeamMemberProps {
   number2: number;
   number3: number;
   risk: string;
+  riskNum: number;
 }
 
 
