@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import 'react-native-gesture-handler';
-import { fetchTeamData, TeamDataRow } from '@/scripts/fetchTeamData';
+// import { fetchTeamData, TeamDataRow } from '@/scripts/fetchTeamData';
+import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta'
 import 'nativewind';
 import TeamMember from '@/components/teamMember';
 import { Banner } from '@/components/teamMember';
 import { NetworkInfo } from 'react-native-network-info';
+
+const connectionIP = 'http://192.168.4.1'
 
 interface TeamMemberData {
   playerName: string;
@@ -42,7 +45,7 @@ export default function Page() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data: TeamDataRow[] = await fetchTeamData();
+        const data: TeamDataRow[] = await fetchAndFormatSensorData(connectionIP);
         const formattedData = data.map(row => ({
           playerName: row[0] || "0",
           number1: row[1] || 0,
@@ -51,6 +54,9 @@ export default function Page() {
           risk: row[4] || "0",
           riskNum: row[5] || 100,
         }));
+
+        const sortedData = formattedData.sort((a, b) => b.riskNum - a.riskNum);
+      
         setTeamData(formattedData);
       } catch (error) {
         console.error('Error fetching team data:', error);

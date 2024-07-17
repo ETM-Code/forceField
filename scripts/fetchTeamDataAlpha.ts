@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const fetchTeamData = async () => {
   try {
-    const response = await axios.get('http://<ESP32_IP_ADDRESS>/teamdata'); 
+    const response = await axios.get('http://192.168.4.1'); 
     const data = response.data;
 
     // Ensure all elements are present in each row

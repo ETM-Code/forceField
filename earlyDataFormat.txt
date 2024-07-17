@@ -1,0 +1,137 @@
+<h1>ESP-NOW Data</h1>
+Received sensor data from MAC: 10:06:1c:9f:37:00
+Sensor data: 3.26 0.46 7.75 6.74 5.21 
+
+Received sensor data from MAC: 10:06:1c:9f:36:f8
+Sensor data: 0.75 0.17 7.61 8.62 5.07 
+
+Sent sensor data from MAC: 10:06:1c:9f:37:a0
+Sensor data: 1.64 3.50 3.10 6.37 5.48 
+
+Received sensor data from MAC: 10:06:1c:9f:37:00
+Sensor data: 7.90 3.12 4.78 5.41 9.56 
+
+Received sensor data from MAC: 10:06:1c:9f:36:f8
+Sensor data: 2.94 9.65 4.59 7.15 0.59 
+
+Sent sensor data from MAC: 10:06:1c:9f:37:a0
+Sensor data: 2.45 6.51 5.51 8.11 4.22 
+
+Received sensor data from MAC: 10:06:1c:9f:37:d0
+Sensor data: 8.05 7.08 1.23 3.47 9.48 
+
+Received sensor data from MAC: 10:06:1c:9f:37:00
+Sensor data: 6.14 2.08 8.80 6.67 6.42 
+
+Received sensor data from MAC: 10:06:1c:9f:36:f8
+Sensor data: 2.62 3.46 0.51 5.01 1.37 
+
+Sent sensor data from MAC: 10:06:1c:9f:37:a0
+Sensor data: 4.73 5.39 8.51 8.10 9.41 
+
+Received sensor data from MAC: 10:06:1c:9f:37:d0
+Sensor data: 8.88 0.92 8.78 6.88 6.74 
+
+Received sensor data from MAC: 10:06:1c:9f:37:00
+Sensor data: 6.79 9.99 7.84 0.79 1.32 
+
+Received sensor data from MAC: 10:06:1c:9f:36:f8
+Sensor data: 2.49 2.40 2.49 0.33 2.13 
+
+Sent sensor data from MAC: 10:06:1c:9f:37:a0
+Sensor data: 4.45 2.62 8.62 5.35 2.58 
+
+Received sensor data from MAC: 10:06:1c:9f:37:d0
+Sensor data: 6.06 8.16 9.86 3.12 8.65 
+
+Received sensor data from MAC: 10:06:1c:9f:37:00
+Sensor data: 8.29 2.22 7.03 0.50 9.07 
+
+Received sensor data from MAC: 10:06:1c:9f:36:f8
+Sensor data: 8.05 0.26 4.49 9.46 8.03 
+
+Sent sensor data from MAC: 10:06:1c:9f:37:a0
+Sensor data: 0.05 3.96 8.11 3.40 0.61 
+
+Received sensor data from MAC: 10:06:1c:9f:37:d0
+Sensor data: 5.64 7.13 0.15 1.05 9.46 
+
+Received sensor data from MAC: 10:06:1c:9f:37:00
+Sensor data: 6.65 3.60 0.10 9.07 4.74 
+
+Received sensor data from MAC: 10:06:1c:9f:36:f8
+Sensor data: 5.46 4.81 7.30 3.01 0.37 
+
+Sent sensor data from MAC: 10:06:1c:9f:37:a0
+Sensor data: 1.56 8.60 2.42 4.26 2.55 
+
+Received sensor data from MAC: 10:06:1c:9f:37:d0
+Sensor data: 6.59 1.16 2.50 4.69 6.39 
+
+Received sensor data from MAC: 10:06:1c:9f:37:00
+Sensor data: 3.02 8.23 5.95 1.36 7.64 
+
+Received sensor data from MAC: 10:06:1c:9f:36:f8
+Sensor data: 7.76 4.84 5.50 8.86 6.77 
+
+Sent sensor data from MAC: 10:06:1c:9f:37:a0
+Sensor data: 0.38 4.51 2.34 3.00 3.34 
+
+Received sensor data from MAC: 10:06:1c:9f:37:d0
+Sensor data: 8.41 5.82 6.63 3.82 9.10 
+
+Received sensor data from MAC: 10:06:1c:9f:37:00
+Sensor data: 1.01 4.40 7.33 6.07 0.12 
+
+Received sensor data from MAC: 10:06:1c:9f:36:f8
+Sensor data: 7.41 3.06 5.93 3.31 5.78 
+
+Sent sensor data from MAC: 10:06:1c:9f:37:a0
+Sensor data: 6.53 4.74 9.60 5.65 1.82 
+
+Received sensor data from MAC: 10:06:1c:9f:37:d0
+Sensor data: 5.87 1.24 8.28 9.83 6.09 
+
+Received sensor data from MAC: 10:06:1c:9f:37:00
+Sensor data: 9.47 4.52 0.32 7.64 5.73 
+
+Received sensor data from MAC: 10:06:1c:9f:36:f8
+Sensor data: 7.56 0.35 0.22 6.36 2.32 
+
+Sent sensor data from MAC: 10:06:1c:9f:37:a0
+Sensor data: 2.70 3.83 6.05 3.43 1.18 
+
+Received sensor data from MAC: 10:06:1c:9f:37:00
+Sensor data: 3.45 5.82 1.02 6.43 1.83 
+
+Received sensor data from MAC: 10:06:1c:9f:36:f8
+Sensor data: 9.05 9.30 5.61 7.98 9.65 
+
+Sent sensor data from MAC: 10:06:1c:9f:37:a0
+Sensor data: 9.76 1.85 3.18 8.73 1.06 
+
+Received sensor data from MAC: 10:06:1c:9f:37:d0
+Sensor data: 9.17 5.80 2.59 8.06 8.13 
+
+Received sensor data from MAC: 10:06:1c:9f:37:00
+Sensor data: 1.44 5.47 4.06 4.28 3.71 
+
+Received sensor data from MAC: 10:06:1c:9f:36:f8
+Sensor data: 9.94 1.63 7.48 2.34 9.57 
+
+Sent sensor data from MAC: 10:06:1c:9f:37:a0
+Sensor data: 1.00 5.53 9.19 2.15 2.24 
+
+Received sensor data from MAC: 10:06:1c:9f:37:d0
+Sensor data: 3.98 1.72 3.25 3.82 6.28 
+
+
+
+
+
+
+
+
+
+
+
