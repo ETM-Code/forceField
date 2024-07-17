@@ -7,9 +7,7 @@ interface TeamMemberProps {
   number2: number;
   number3: number;
   risk: string;
-//   riskNum: number;
 }
-
 
 const Banner: React.FC = () => {
   return (
@@ -31,48 +29,46 @@ const BannerStyles = StyleSheet.create({
   bannerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-around',
     paddingVertical: 10,
-    backgroundColor: '#333',
+    backgroundColor: '#1A1A1A',
     borderRadius: 10,
     marginVertical: 5,
+    paddingHorizontal: 10,
   },
   bannerText: {
-    flex: 1,
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#E0E0E0',
     textAlign: 'center',
   },
   divider: {
     fontSize: 18,
-    color: '#fff',
-    marginHorizontal: 0,
+    color: '#E0E0E0',
   },
 });
 
-export {Banner};
+export { Banner };
 
-
-const TeamMember: React.FC<TeamMemberProps> = ({ playerName, number1, number2, number3, risk}) => {
+const TeamMember: React.FC<TeamMemberProps> = ({ playerName, number1, number2, number3, risk }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.playerName}>{playerName}</Text>
       <View style={styles.numbersContainer}>
-        <View style={[styles.numberBox, styles.yellow]}>
-          <Text style={styles.numberTexty}>{number1}</Text>
+        <View style={[styles.numberBox, styles.mild]}>
+          <Text style={styles.numberText}>{number1}</Text>
         </View>
         <Text style={styles.divider}>|</Text>
-        <View style={[styles.numberBox, styles.orange]}>
-          <Text style={styles.numberTexty}>{number2}</Text>
+        <View style={[styles.numberBox, styles.mod]}>
+          <Text style={styles.numberText}>{number2}</Text>
         </View>
         <Text style={styles.divider}>|</Text>
-        <View style={[styles.numberBox, styles.red]}>
-          <Text style={styles.numberTexty}>{number3}</Text>
+        <View style={[styles.numberBox, styles.major]}>
+          <Text style={styles.numberText}>{number3}</Text>
         </View>
         <Text style={styles.divider}>|</Text>
-        <View style={[styles.numberBox]}>
-          <Text style={styles.numberTexty}>{risk}</Text>
+        <View style={styles.numberBox}>
+          <Text style={styles.riskText}>{risk}%</Text>
         </View>
       </View>
     </View>
@@ -85,7 +81,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     marginVertical: 5,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#242424',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -97,7 +93,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#E0E0E0',
   },
   numbersContainer: {
     flexDirection: 'row',
@@ -110,31 +106,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 5,
   },
+
   numberText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#000000',
   },
-
-  numberTexty: {
+  riskText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#00000',
+    color: '#FF4081',
   },
-  
-  yellow: {
-    backgroundColor: 'yellow',
+  mild: {
+    backgroundColor: '#FFC107',
   },
-  orange: {
-    backgroundColor: 'orange',
+  mod: {
+    backgroundColor: '#FF9800',
   },
-  red: {
-    backgroundColor: 'red',
+  major: {
+    backgroundColor: '#F44336',
   },
   divider: {
     marginHorizontal: 5,
     fontSize: 18,
-    color: '#333',
+    color: '#E0E0E0',
   },
 });
 

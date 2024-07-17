@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, View, ScrollView } from 'react-native';
 import 'react-native-gesture-handler';
-// import { fetchTeamData, TeamDataRow } from '@/scripts/fetchTeamData';
-import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta'
+import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta';
 import 'nativewind';
 import TeamMember from '@/components/teamMember';
 import { Banner } from '@/components/teamMember';
-import { NetworkInfo } from 'react-native-network-info';
 
-const connectionIP = 'http://192.168.4.1'
+const connectionIP = 'http://192.168.4.1';
 
 interface TeamMemberData {
   playerName: string;
@@ -20,27 +18,6 @@ interface TeamMemberData {
 
 export default function Page() {
   const [teamData, setTeamData] = useState<TeamMemberData[]>([]);
-  const [ssid, setSsid] = useState('TEAM NAME');
-
-  useEffect(() => {
-    const fetchSSID = async () => {
-      try {
-        const ssid = await NetworkInfo.getSSID();
-        if (ssid) {
-          // Remove the final occurrence of "field"
-          const processedSsid = ssid.replace(/field$/i, '');
-          setSsid(processedSsid);
-        }
-      } catch (error) {
-        console.error('Error getting SSID:', error);
-      }
-    };
-
-    fetchSSID();
-    const intervalId = setInterval(fetchSSID, 1000);
-
-    return () => clearInterval(intervalId);
-  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,7 +29,7 @@ export default function Page() {
           number2: row[2] || 0,
           number3: row[3] || 0,
           risk: row[4] || "0",
-          riskNum: row[5] || 100,
+          riskNum: row[5] || 0,
         }));
 
         const sortedData = formattedData.sort((a, b) => b.riskNum - a.riskNum);
@@ -71,10 +48,10 @@ export default function Page() {
 
   return (
     <View className="bg-gray-900 min-h-screen">
-      <View className='m-10 p-5 bg-purple-500/50 rounded-2xl'>
-        <Text className='text-white text-4xl text-center'>{ssid}</Text>
+      <View className='m-10 p-5 bg-gray-800 rounded-2xl shadow-lg'>
+        <Text className='text-white text-4xl text-center'>Your Team</Text>
       </View>
-      <View className='bg-gray-600 p-5 mx-4 rounded-2xl min-h-screen'>
+      <View className='bg-gray-700 p-5 mx-4 rounded-2xl min-h-screen shadow-lg'>
         <Banner />
         <ScrollView>
           {teamData.map((member, index) => (
