@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { RootStackParamList } from '../app/NavigationTypes';
+import { useRouter } from 'expo-router';
 
 interface TeamMemberProps {
   playerName: string;
@@ -13,10 +12,14 @@ interface TeamMemberProps {
 }
 
 const TeamMember: React.FC<TeamMemberProps> = ({ playerName, number1, number2, number3, risk, accels }) => {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const router = useRouter();
 
   const handlePress = () => {
-    navigation.navigate('TeamMemberDetail', { playerName, accels });
+    console.log(accels);
+    router.push({
+      pathname: '/teamMemberDetail',
+      params: { playerName, accels },
+    });
   };
 
   return (
@@ -37,7 +40,7 @@ const TeamMember: React.FC<TeamMemberProps> = ({ playerName, number1, number2, n
           </View>
           <Text style={styles.divider}>|</Text>
           <View style={styles.numberBox}>
-            <Text style={styles.riskText}>{risk}%</Text>
+            <Text style={styles.riskText}>{risk}</Text>
           </View>
         </View>
       </View>
@@ -86,31 +89,6 @@ const BannerStyles = StyleSheet.create({
 
 export { Banner };
 
-// const TeamMember: React.FC<TeamMemberProps> = ({ playerName, number1, number2, number3, risk }) => {
-//   return (
-//     <View style={styles.container}>
-//       <Text style={styles.playerName}>{playerName}</Text>
-//       <View style={styles.numbersContainer}>
-//         <View style={[styles.numberBox, styles.mild]}>
-//           <Text style={styles.numberText}>{number1}</Text>
-//         </View>
-//         <Text style={styles.divider}>|</Text>
-//         <View style={[styles.numberBox, styles.mod]}>
-//           <Text style={styles.numberText}>{number2}</Text>
-//         </View>
-//         <Text style={styles.divider}>|</Text>
-//         <View style={[styles.numberBox, styles.major]}>
-//           <Text style={styles.numberText}>{number3}</Text>
-//         </View>
-//         <Text style={styles.divider}>|</Text>
-//         <View style={styles.numberBox}>
-//           <Text style={styles.riskText}>{risk}%</Text>
-//         </View>
-//       </View>
-//     </View>
-//   );
-// };
-
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
@@ -142,7 +120,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 5,
   },
-
   numberText: {
     fontSize: 16,
     fontWeight: 'bold',

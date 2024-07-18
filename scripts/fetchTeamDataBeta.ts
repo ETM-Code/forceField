@@ -61,6 +61,7 @@ const assignLevels = (data: SensorData) => {
 
   // Classify the accels values into different levels
   data.accels.forEach(value => {
+    data.lowaccels.push(value); //for testing only, comment out **********************************
     if (value > 35.9 && value < 46.5) {
       data.lowaccels.push(value);
     } else if (value >= 46.5 && value < 52.0) {
@@ -73,21 +74,20 @@ const assignLevels = (data: SensorData) => {
   // Calculate riskNum
   let riskSum = 1;
   let trueRisk = 0;
-  let count = 0;
 
   data.accels.forEach(value => {
     if (value > 25) {
-      let riskValue ;
+      let riskValue;
       if (value < 89) {
         riskValue = -0.0004 * Math.pow(value, 3) + 0.0631 * Math.pow(value, 2) - 2.1851 * value + 21.545;
       } else {
         riskValue = 100;
       }
-      if (riskValue > 100) {riskValue=100;}
-      let riskProb = 1-(riskValue/100);
+      if (riskValue > 100) { riskValue = 100; }
+      let riskProb = 1 - (riskValue / 100);
 
-      riskSum = riskSum*riskProb;
-      trueRisk = (1-riskSum)*100
+      riskSum = riskSum * riskProb;
+      trueRisk = (1 - riskSum) * 100;
     }
   });
 
@@ -114,7 +114,7 @@ const processSensorData = async (preContents: string[]): Promise<Record<string, 
 
     if (macMatch && dataMatch) {
       const macAddress = macMatch[1];
-      const accels = dataMatch[1].trim().split(/\s+/).map(Number);
+      const accels = dataMatch[1].trim().split(/\s+/).map(parseFloat); // Use parseFloat here
 
       // Initialize new arrays if the MAC address is not already in the map
       if (!macDataMap[macAddress]) {
@@ -144,8 +144,8 @@ const formatMacData = (macDataMap: Record<string, SensorData>): TeamDataRow[] =>
   return Object.entries(macDataMap).map(([mac, data]) => {
     return [
       mac,
-      data.accels.length,
-      1,
+      data.lowaccels.length,
+      data.medaccels.length,
       data.highaccels.length,
       data.risk || "V. High",
       data.riskNum !== undefined ? data.riskNum : 100,

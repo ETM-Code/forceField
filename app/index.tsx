@@ -3,10 +3,6 @@ import { Text, View, Linking, Platform, TouchableOpacity } from 'react-native';
 import 'nativewind';
 import { Link, useRouter, useSegments } from 'expo-router';
 import NetInfo from '@react-native-community/netinfo';
-import { NavigationContainer, NavigationProp } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import TeamPage from './teamPage'; // Ensure correct path
-import TeamMemberDetail from './teamMemberDetail'; // Ensure correct path
 
 const openWifiSettings = () => {
   if (Platform.OS === 'ios') {
@@ -16,16 +12,7 @@ const openWifiSettings = () => {
   }
 };
 
-// Define the type for the navigation stack parameters
-export type RootStackParamList = {
-  Index: undefined;
-  TeamPage: undefined;
-  TeamMemberDetail: { playerName: string; accels: number[] };
-};
-
-const Stack = createStackNavigator<RootStackParamList>();
-
-export default function App() {
+export default function IndexPage() {
   const router = useRouter();
   const segments = useSegments();
 
@@ -34,8 +21,9 @@ export default function App() {
       try {
         const state = await NetInfo.fetch();
         if (state.type === 'wifi') {
-          if (segments[0] !== 'teamPage') {
-            router.push('./teamPage');
+          if (segments[0] == 'index') {
+            // router.push('/teamPage');
+            router.push('/teamPageTest');
           }
         }
       } catch (error) {
@@ -49,19 +37,7 @@ export default function App() {
     return () => clearInterval(intervalId);
   }, [router, segments]);
 
-  return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Index">
-        <Stack.Screen name="Index" component={IndexPage} options={{ headerShown: false }} />
-        <Stack.Screen name="TeamPage" component={TeamPage} />
-        <Stack.Screen name="TeamMemberDetail" component={TeamMemberDetail} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
-}
-
-// Separate component for the index page to avoid conflict with navigation
-const IndexPage: React.FC = () => {
+  
   return (
     <View className="bg-gray-900 min-h-screen flex justify-center items-center">
       <View className='flex items-center bg-gray-800 m-5 rounded-3xl p-10 shadow-lg'>
@@ -73,8 +49,9 @@ const IndexPage: React.FC = () => {
         </TouchableOpacity>
       </View>
       <View className="mt-20">
-        <Link href='./teamPage' className='text-white text-center text-xl'>Go to team page</Link>
+        <Link href='/teamPage' className='text-white text-center text-xl'>Go to team page</Link>
+        <Link href='/displayAccels' className='text-white text-center text-xl'>Go to accel view</Link>
       </View>
     </View>
   );
-};
+}
