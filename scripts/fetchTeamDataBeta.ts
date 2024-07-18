@@ -88,21 +88,20 @@ const assignLevels = (data: SensorData) => {
 
       riskSum = riskSum*riskProb;
       trueRisk = (1-riskSum)*100
-    //   count++;
     }
   });
 
-  data.riskNum = count > 0 ? trueRisk : 0;
+  data.riskNum = trueRisk;
 
   // Assign risk based on riskNum
-  if (data.riskNum < 15) {
-    data.risk = "low";
-  } else if (data.riskNum < 30) {
-    data.risk = "med";
-  } else if (data.riskNum < 45) {
-    data.risk = "high";
+  if (data.riskNum < 10) {
+    data.risk = "Low";
+  } else if (data.riskNum < 25) {
+    data.risk = "Med";
+  } else if (data.riskNum < 40) {
+    data.risk = "High";
   } else {
-    data.risk = "v. high";
+    data.risk = "V. high";
   }
 };
 
@@ -139,7 +138,7 @@ const processSensorData = async (preContents: string[]): Promise<Record<string, 
   return macDataMap;
 };
 
-export type TeamDataRow = [string, number, number, number, string, number];
+export type TeamDataRow = [string, number, number, number, string, number, number[]];
 
 const formatMacData = (macDataMap: Record<string, SensorData>): TeamDataRow[] => {
   return Object.entries(macDataMap).map(([mac, data]) => {
@@ -150,6 +149,7 @@ const formatMacData = (macDataMap: Record<string, SensorData>): TeamDataRow[] =>
       data.highaccels.length,
       data.risk || "V. High",
       data.riskNum !== undefined ? data.riskNum : 100,
+      data.accels,
     ];
   });
 };

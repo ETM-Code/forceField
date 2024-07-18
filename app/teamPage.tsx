@@ -14,6 +14,7 @@ interface TeamMemberData {
   number2: number;
   number3: number;
   risk: string;
+  accels: number[];
 }
 
 export default function Page() {
@@ -30,11 +31,12 @@ export default function Page() {
           number3: row[3] || 0,
           risk: row[4] || "0",
           riskNum: row[5] || 0,
+          accels: row[6] || [], // Include acceleration data
         }));
 
         const sortedData = formattedData.sort((a, b) => b.riskNum - a.riskNum);
       
-        setTeamData(formattedData);
+        setTeamData(sortedData);
       } catch (error) {
         console.error('Error fetching team data:', error);
       }
@@ -62,6 +64,7 @@ export default function Page() {
               number2={member.number2}
               number3={member.number3}
               risk={member.risk}
+              accels={member.accels} // Pass acceleration data
             />
           ))}
           <View className='py-80'></View>

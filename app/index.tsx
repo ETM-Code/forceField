@@ -3,6 +3,10 @@ import { Text, View, Linking, Platform, TouchableOpacity } from 'react-native';
 import 'nativewind';
 import { Link, useRouter, useSegments } from 'expo-router';
 import NetInfo from '@react-native-community/netinfo';
+import { NavigationContainer, NavigationProp } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import TeamPage from './teamPage'; // Ensure correct path
+import TeamMemberDetail from './teamMemberDetail'; // Ensure correct path
 
 const openWifiSettings = () => {
   if (Platform.OS === 'ios') {
@@ -12,10 +16,19 @@ const openWifiSettings = () => {
   }
 };
 
-export default function Page() {
+// Define the type for the navigation stack parameters
+export type RootStackParamList = {
+  Index: undefined;
+  TeamPage: undefined;
+  TeamMemberDetail: { playerName: string; accels: number[] };
+};
+
+const Stack = createStackNavigator<RootStackParamList>();
+
+export default function App() {
   const router = useRouter();
   const segments = useSegments();
-  
+
   useEffect(() => {
     const checkForWifi = async () => {
       try {
@@ -37,6 +50,19 @@ export default function Page() {
   }, [router, segments]);
 
   return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Index">
+        <Stack.Screen name="Index" component={IndexPage} options={{ headerShown: false }} />
+        <Stack.Screen name="TeamPage" component={TeamPage} />
+        <Stack.Screen name="TeamMemberDetail" component={TeamMemberDetail} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+// Separate component for the index page to avoid conflict with navigation
+const IndexPage: React.FC = () => {
+  return (
     <View className="bg-gray-900 min-h-screen flex justify-center items-center">
       <View className='flex items-center bg-gray-800 m-5 rounded-3xl p-10 shadow-lg'>
         <TouchableOpacity onPress={openWifiSettings}>
@@ -51,4 +77,4 @@ export default function Page() {
       </View>
     </View>
   );
-}
+};
