@@ -3,48 +3,34 @@ import { View, Text, ScrollView, Dimensions, StyleSheet } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from './NavigationTypes';
-import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta';
-import TeamMember from '@/components/teamMember'; // Import the TeamMember component
+import { useSensorData } from '@/context/SensorDataContext';
+import { TeamDataRow } from '@/scripts/fetchTeamDataBeta';
+import TeamMember from '@/components/teamMember';
 
 const screenWidth = Dimensions.get("window").width;
 
 type TeamMemberDetailRouteProp = RouteProp<RootStackParamList, 'TeamMemberDetail'>;
 
-const connectionIP = 'http://192.168.4.1';
-
 const TeamMemberDetail: React.FC = () => {
   const route = useRoute<TeamMemberDetailRouteProp>();
   const { playerName } = route.params;
-  const [accelerationData, setAccelerationData] = useState<number[]>([]);
+  const { teamData, loading } = useSensorData();
   const [memberData, setMemberData] = useState<TeamDataRow | null>(null);
+  const [accelerationData, setAccelerationData] = useState<number[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data: TeamDataRow[] = await fetchAndFormatSensorData(connectionIP);
-        const memberData = data.find(row => row[0] === playerName);
-        if (memberData) {
-          const validAccels = memberData[6].filter(value => !isNaN(value) && isFinite(value));
-          setAccelerationData(validAccels);
-          setMemberData(memberData); // Set the member data for the TeamMember component
-        } else {
-          setAccelerationData([]); // Default data if no member data found
-          setMemberData(null); // Reset member data if not found
-        }
-      } catch (error) {
-        console.error('Error fetching team data:', error);
-        setAccelerationData([]); // Default data in case of an error
-        setMemberData(null); // Reset member data in case of an error
-      }
-    };
+    const memberData = teamData.find(row => row[0] === playerName);
+    if (memberData) {
+      const validAccels = memberData[6].filter(value => !isNaN(value) && isFinite(value));
+      setAccelerationData(validAccels);
+      setMemberData(memberData);
+    } else {
+      setAccelerationData([]);
+      setMemberData(null);
+    }
+  }, [teamData, playerName]);
 
-    fetchData();
-    const intervalId = setInterval(fetchData, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [playerName]);
-
-  if (accelerationData.length === 0) {
+  if (loading) {
     return (
       <View style={styles.waitingContainer}>
         <Text style={styles.waitingText}>Waiting for data...</Text>
@@ -68,9 +54,11 @@ const TeamMemberDetail: React.FC = () => {
                 },
               ],
             }}
-            width={screenWidth} // from react-native
+            width={screenWidth * 2} // make the chart width double to make it scrollable
             height={220}
             yAxisLabel=""
+            yAxisSuffix="g"
+            yAxisInterval={1}
             chartConfig={{
               backgroundColor: '#1A1A1A',
               backgroundGradientFrom: '#1A1A1A',
@@ -82,13 +70,14 @@ const TeamMemberDetail: React.FC = () => {
                 borderRadius: 16,
               },
               propsForDots: {
-                r: '6',
-                strokeWidth: '2',
-                stroke: '#ffa726',
+                r: '0', // Remove dots
+              },
+              propsForBackgroundLines: {
+                strokeDasharray: '', // solid background lines with no dashes
               },
             }}
-            bezier
             style={styles.chart}
+            withDots={false} // Ensure no dots are displayed
           />
         </ScrollView>
       </View>

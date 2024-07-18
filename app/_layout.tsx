@@ -1,3 +1,4 @@
+// _layout.tsx
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -7,6 +8,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { NativeWindStyleSheet } from "nativewind";
+import { SensorDataProvider } from '@/context/SensorDataContext';
 
 NativeWindStyleSheet.setOutput({
   default: "native",
@@ -33,12 +35,13 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      {/* Define the layout for your app using the Stack component from expo-router */}
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="teamPage" />
-        <Stack.Screen name="teamMemberDetail" />
-      </Stack>
+      <SensorDataProvider>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="teamPage" />
+          <Stack.Screen name="teamMemberDetail" />
+        </Stack>
+      </SensorDataProvider>
     </ThemeProvider>
   );
 }
