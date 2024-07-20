@@ -70,7 +70,7 @@ const BannerStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingVertical: 10,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#a1a1a1',
     borderRadius: 10,
     marginVertical: 5,
     paddingHorizontal: 10,
@@ -78,7 +78,7 @@ const BannerStyles = StyleSheet.create({
   bannerText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#E0E0E0',
+    color: 'black',
     textAlign: 'center',
   },
   divider: {
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     marginVertical: 5,
-    backgroundColor: '#242424',
+    backgroundColor: '#a1a1a1',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#E0E0E0',
+    color: 'black',
   },
   numbersContainer: {
     flexDirection: 'row',

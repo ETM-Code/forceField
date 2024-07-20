@@ -36,10 +36,12 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <SensorDataProvider>
-        <Stack>
+        <Stack >
           <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="teamPage" />
-          <Stack.Screen name="teamMemberDetail" />
+          <Stack.Screen name="teamPage" options={{ headerShown: false }} />
+          <Stack.Screen name="StartSessionPage" options={{ headerShown: false }} />
+          <Stack.Screen name="LoadSessionPage" options={{ headerShown: false }} />
+          <Stack.Screen name="teamMemberDetail"/>
         </Stack>
       </SensorDataProvider>
     </ThemeProvider>

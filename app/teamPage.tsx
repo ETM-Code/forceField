@@ -1,8 +1,13 @@
-import React from 'react';
-import { Text, View, ScrollView } from 'react-native';
-import 'react-native-gesture-handler';
-import 'nativewind';
+import React, { useEffect, useState } from 'react';
+import { Text, View, ScrollView, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSensorData } from '@/context/SensorDataContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import NetInfo from '@react-native-community/netinfo';
+import 'nativewind';
+import TeamMember from '@/components/teamMember';
+import { Banner } from '@/components/teamMember';
 
 interface TeamMemberData {
   playerName: string;
@@ -14,39 +19,125 @@ interface TeamMemberData {
 }
 
 export default function Page() {
+  const [sessionName, setSessionName] = useState<string | null>(null);
+  const [isConnectedToWifi, setIsConnectedToWifi] = useState<boolean | null>(null);
+  const [previousSession, setPreviousSession] = useState<string | null>(null);
+  const router = useRouter();
   const { teamData, loading } = useSensorData();
+  const { historical } = useLocalSearchParams();
 
-  const formattedData = teamData.map(row => ({
-    playerName: row[0] || "0",
-    number1: row[1] || 0,
-    number2: row[2] || 0,
-    number3: row[3] || 0,
-    risk: row[4] || "0",
-    riskNum: row[5] || 0,
-    accels: row[6] || [], // Include acceleration data
-  }));
+  useEffect(() => {
+    const getSessionName = async () => {
+      const currentSession = await AsyncStorage.getItem('currentSession');
+      setSessionName(currentSession);
 
-  const sortedData = formattedData.sort((a, b) => b.riskNum - a.riskNum);
-  const firstMemberAccels = sortedData.length > 0 ? sortedData[0].accels : [];
+      if (historical && currentSession) {
+        setPreviousSession(currentSession);
+      }
+    };
 
-  if (loading) {
-    return (
-      <View className="bg-pink-900 min-h-screen flex justify-center items-center">
-        <Text className='text-white text-2xl'>Loading...</Text>
-      </View>
+    getSessionName();
+  }, [historical]);
+
+  useEffect(() => {
+    if (!historical) {
+      const checkConnection = () => {
+        NetInfo.fetch().then(state => {
+          setIsConnectedToWifi(state.type === 'wifi' && state.isConnected);
+        });
+      };
+
+      checkConnection();
+      const unsubscribe = NetInfo.addEventListener(state => {
+        setIsConnectedToWifi(state.type === 'wifi' && state.isConnected);
+      });
+
+      return () => unsubscribe();
+    }
+  }, [historical]);
+
+  const saveSessionData = async () => {
+    const previousSessions = JSON.parse(await AsyncStorage.getItem('previousSessions') || '[]');
+    const newSession = { sessionName: sessionName, data: teamData };
+    previousSessions.push(newSession);
+    await AsyncStorage.setItem('previousSessions', JSON.stringify(previousSessions));
+  };
+
+  const handleEndSession = async () => {
+    await saveSessionData();
+    await AsyncStorage.setItem('currentSession', '');
+    router.push('/');
+  };
+
+  const confirmEndSession = () => {
+    Alert.alert(
+      "End Session",
+      "Are you sure you want to end the session?",
+      [
+        {
+          text: "No",
+          style: "cancel"
+        },
+        {
+          text: "Yes",
+          onPress: handleEndSession
+        }
+      ],
+      { cancelable: false }
     );
-  }
+  };
+
+  const handleExitHistorical = async () => {
+    if (previousSession) {
+      await AsyncStorage.setItem('currentSession', previousSession);
+    }
+    router.push('/LoadSessionPage');
+  };
 
   return (
-    <View className="bg-pink-900 min-h-screen">
-      <View className='m-10 p-5 bg-gray-800 rounded-2xl shadow-lg'>
-        <Text className='text-white text-4xl text-center'>Your Team</Text>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.homeButton}
+          onPress={() => {
+            if (historical) {
+              handleExitHistorical();
+            } else {
+              router.push('/');
+            }
+          }}
+        >
+          <Ionicons name={historical ? "arrow-back" : "home"} size={24} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>{sessionName || 'Your Team'}</Text>
+        <View style={styles.homeButtonPlaceholder} />
       </View>
-      <View className='bg-gray-700 p-5 mx-4 rounded-2xl min-h-screen shadow-lg'>
-        <Text className='text-white text-2xl text-center'>Acceleration Data of First Team Member</Text>
+      {!historical && (
+        <TouchableOpacity style={styles.endSessionButton} onPress={confirmEndSession}>
+          <Text style={styles.endSessionButtonText}>End Session</Text>
+        </TouchableOpacity>
+      )}
+      {isConnectedToWifi === false && !historical && (
+        <View style={styles.wifiWarningContainer}>
+          <Text style={styles.wifiWarningText}>
+            You are not connected to WiFi. For proper functionality, please connect to helmet WiFi. 
+            <Text style={styles.link} onPress={() => Linking.openURL('App-Prefs:root=WIFI')}> Go to WiFi Settings</Text>
+          </Text>
+        </View>
+      )}
+      <View style={styles.content}>
+        <Banner />
         <ScrollView>
-          {firstMemberAccels.map((accel, index) => (
-            <Text key={index} style={{ color: 'white' }}>{accel}</Text>
+          {teamData.map((member, index) => (
+            <TeamMember
+              key={index}
+              playerName={member[0]}
+              number1={member[1]}
+              number2={member[2]}
+              number3={member[3]}
+              risk={member[4]}
+              accels={member[6]} // Pass acceleration data
+            />
           ))}
           <View className='py-80'></View>
         </ScrollView>
@@ -54,3 +145,69 @@ export default function Page() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#828282',
+    padding: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#c7c7c7',
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 40,
+    marginBottom: 20,
+  },
+  homeButton: {
+    padding: 10,
+  },
+  homeButtonPlaceholder: {
+    width: 24, // to align the center text properly
+  },
+  headerText: {
+    fontSize: 24,
+    color: 'black',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    flex: 1,
+  },
+  endSessionButton: {
+    backgroundColor: '#ff5e5e',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 20,
+    marginHorizontal: 20,
+  },
+  endSessionButtonText: {
+    color: 'black',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  wifiWarningContainer: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: '#FF4500',
+    borderRadius: 5,
+  },
+  wifiWarningText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  link: {
+    color: 'white',
+    textDecorationLine: 'underline',
+  },
+  content: {
+    flex: 1,
+    backgroundColor: '#d9d9d9',
+    padding: 10,
+    borderRadius: 10,
+  },
+});

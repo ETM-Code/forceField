@@ -1,6 +1,8 @@
-// SensorDataContext.tsx
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// AsyncStorage.clear()
 
 const connectionIP = 'http://192.168.4.1';
 
@@ -27,9 +29,24 @@ export const SensorDataProvider: React.FC<SensorDataProviderProps> = ({ children
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data: TeamDataRow[] = await fetchAndFormatSensorData(connectionIP);
-        setTeamData(data);
-        setLoading(false);
+        const currentSession = await AsyncStorage.getItem('currentSession');
+        if (currentSession) {
+          const data: TeamDataRow[] = await fetchAndFormatSensorData(connectionIP);
+          setTeamData(data);
+          setLoading(false);
+
+          // Store the session data in previousSessions
+          const previousSessions = JSON.parse(await AsyncStorage.getItem('previousSessions') || '[]');
+          const sessionIndex = previousSessions.findIndex((session: any) => session.sessionName === currentSession);
+          if (sessionIndex !== -1) {
+            previousSessions[sessionIndex].data = data;
+          } else {
+            previousSessions.push({ sessionName: currentSession, data });
+          }
+          await AsyncStorage.setItem('previousSessions', JSON.stringify(previousSessions));
+        } else {
+          setLoading(false);
+        }
       } catch (error) {
         console.error('Error fetching team data:', error);
         setLoading(false);

@@ -1,57 +1,106 @@
-import React, { useEffect } from 'react';
-import { Text, View, Linking, Platform, TouchableOpacity } from 'react-native';
-import 'nativewind';
-import { Link, useRouter, useSegments } from 'expo-router';
-import NetInfo from '@react-native-community/netinfo';
+// App.tsx
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import * as Font from 'expo-font';
+import { Poppins_400Regular, Poppins_700Bold } from '@expo-google-fonts/poppins';
+import AppLoading from 'expo-app-loading';
 
-const openWifiSettings = () => {
-  if (Platform.OS === 'ios') {
-    Linking.openURL('App-Prefs:root=WIFI');
-  } else {
-    Linking.openURL('android.settings.WIFI_SETTINGS');
-  }
-};
+// Import the images
+import BackgroundImage from '../assets/images/helmet.png';
+import LogoImage from '../assets/images/Force.png'; // Replace with your logo image path
 
-export default function IndexPage() {
+const HomePage: React.FC = () => {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
   const router = useRouter();
-  const segments = useSegments();
 
   useEffect(() => {
-    const checkForWifi = async () => {
-      try {
-        const state = await NetInfo.fetch();
-        if (state.type === 'wifi') {
-          if (segments[0] == 'index') {
-            // router.push('/teamPage');
-            router.push('/teamPageTest');
-          }
-        }
-      } catch (error) {
-        console.log("Error checking WiFi state:", error);
-      }
-    };
+    async function loadFonts() {
+      await Font.loadAsync({
+        Poppins_400Regular,
+        Poppins_700Bold,
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
-    checkForWifi(); // Initial check
-    const intervalId = setInterval(checkForWifi, 1000); // Periodic check
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  }
 
-    return () => clearInterval(intervalId);
-  }, [router, segments]);
-
-  
   return (
-    <View className="bg-gray-900 min-h-screen flex justify-center items-center">
-      <View className='flex items-center bg-gray-800 m-5 rounded-3xl p-10 shadow-lg'>
-        <TouchableOpacity onPress={openWifiSettings}>
-          <Text className='text-white text-4xl text-center mb-5'>Connect to Team WiFi</Text>
-          <View className='bg-gray-700/60 p-4 rounded-xl'>
-            <Text className='text-white text-2xl text-center'>(Network)</Text>
-          </View>
+    <View style={styles.container}>
+      <Image source={BackgroundImage} style={styles.backgroundImage} />
+      <Image source={LogoImage} style={styles.logo} />
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={() => router.push('/StartSessionPage')}>
+          <Ionicons name="play" size={24} color="black" />
+          <Text style={styles.buttonText}>Start Session</Text>
+          <View style={styles.underline}></View>
         </TouchableOpacity>
-      </View>
-      <View className="mt-20">
-        <Link href='/teamPage' className='text-white text-center text-xl'>Go to team page</Link>
-        <Link href='/displayAccels' className='text-white text-center text-xl'>Go to accel view</Link>
+        <TouchableOpacity style={styles.button} onPress={() => router.push('/LoadSessionPage')}>
+          <Ionicons name="reload" size={24} color="black" />
+          <Text style={styles.buttonText}>Load Session</Text>
+          <View style={styles.underline}></View>
+        </TouchableOpacity>
       </View>
     </View>
   );
-}
+};
+
+export default HomePage;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    padding: 20,
+  },
+  backgroundImage: {
+    position: 'absolute',
+    left: 0,
+    top: '30%',
+    zIndex: -1,
+    opacity: 0.2,
+    width: 500, // Adjust size as needed
+    height: 500, // Adjust size as needed
+  },
+  logo: {
+    width: 400,
+    height: 120,
+    marginBottom: 0,
+    resizeMode: 'contain',
+    marginTop: 50, // Adjust margin as needed
+  },
+  buttonContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    width: '100%',
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    marginVertical: 30,
+    position: 'relative',
+  },
+  buttonText: {
+    color: 'black',
+    fontSize: 24,
+    marginLeft: 10,
+    fontFamily: 'Poppins_400Regular',
+  },
+  underline: {
+    position: 'absolute',
+    bottom: -5,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#0096FF',
+  },
+});

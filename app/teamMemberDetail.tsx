@@ -44,6 +44,9 @@ const TeamMemberDetail: React.FC = () => {
         <Text style={styles.headerText}>{playerName}</Text>
       </View>
       <View style={styles.chartContainer}>
+        <View style={styles.yAxisContainer}>
+          <Text style={styles.yAxisLabel}>Acceleration (g)</Text>
+        </View>
         <ScrollView horizontal>
           <LineChart
             data={{
@@ -60,9 +63,9 @@ const TeamMemberDetail: React.FC = () => {
             yAxisSuffix="g"
             yAxisInterval={1}
             chartConfig={{
-              backgroundColor: '#1A1A1A',
-              backgroundGradientFrom: '#1A1A1A',
-              backgroundGradientTo: '#1A1A1A',
+              backgroundColor: '#333',
+              backgroundGradientFrom: '#333',
+              backgroundGradientTo: '#333',
               decimalPlaces: 2, // optional, defaults to 2dp
               color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
               labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
@@ -80,17 +83,17 @@ const TeamMemberDetail: React.FC = () => {
             withDots={false} // Ensure no dots are displayed
           />
         </ScrollView>
+        {memberData && (
+          <TeamMember
+            playerName={memberData[0]}
+            number1={memberData[1]}
+            number2={memberData[2]}
+            number3={memberData[3]}
+            risk={memberData[4]}
+            accels={memberData[6]}
+          />
+        )}
       </View>
-      {memberData && (
-        <TeamMember
-          playerName={memberData[0]}
-          number1={memberData[1]}
-          number2={memberData[2]}
-          number3={memberData[3]}
-          risk={memberData[4]}
-          accels={memberData[6]}
-        />
-      )}
     </View>
   );
 };
@@ -99,25 +102,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#242424',
+    padding: 10,
   },
   headerContainer: {
     margin: 10,
     padding: 10,
     backgroundColor: '#1A1A1A',
     borderRadius: 10,
+    alignItems: 'center',
   },
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#E0E0E0',
-    textAlign: 'center',
   },
   chartContainer: {
-    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     margin: 10,
     padding: 10,
     backgroundColor: '#1A1A1A',
     borderRadius: 10,
+  },
+  yAxisContainer: {
+    justifyContent: 'center',
+    paddingRight: 5,
+  },
+  yAxisLabel: {
+    color: '#E0E0E0',
+    fontSize: 12,
+    transform: [{ rotate: '270deg' }],
   },
   chart: {
     marginVertical: 8,
