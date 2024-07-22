@@ -1,5 +1,4 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const DOMParser = require('react-native-html-parser').DOMParser;
 
@@ -36,7 +35,7 @@ interface SensorData {
   riskNum?: number;
 }
 
-const loadMacDataMap = async (): Promise<Record<string, SensorData>> => {
+const loadMacDataMap = async (): Promise<Record<string, SensorData>> => { //?????
   try {
     const storedData = await AsyncStorage.getItem(LOCAL_STORAGE_KEY);
     return storedData ? JSON.parse(storedData) : {};
@@ -61,7 +60,7 @@ const assignLevels = (data: SensorData) => {
 
   // Classify the accels values into different levels
   data.accels.forEach(value => {
-    data.lowaccels.push(value); //for testing only, comment out **********************************
+    // data.lowaccels.push(value); //for testing only, comment out **********************************
     if (value > 35.9 && value < 46.5) {
       data.lowaccels.push(value);
     } else if (value >= 46.5 && value < 52.0) {

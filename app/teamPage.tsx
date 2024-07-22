@@ -7,6 +7,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import NetInfo from '@react-native-community/netinfo';
 import 'nativewind';
 import TeamMember from '@/components/teamMember';
+import { useFocusEffect } from '@react-navigation/native';
 import { Banner } from '@/components/teamMember';
 
 interface TeamMemberData {
@@ -23,7 +24,7 @@ export default function Page() {
   const [isConnectedToWifi, setIsConnectedToWifi] = useState<boolean | null>(null);
   const [previousSession, setPreviousSession] = useState<string | null>(null);
   const router = useRouter();
-  const { teamData, loading } = useSensorData();
+  const { teamData, loading, setTeamData, saveMacDataMap } = useSensorData();
   const { historical } = useLocalSearchParams();
 
   useEffect(() => {
@@ -69,6 +70,17 @@ export default function Page() {
     router.push('/');
   };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        setSessionName(null);
+        setIsConnectedToWifi(null);
+        setPreviousSession(null);
+        setTeamData([]); // Clear team data here
+      };
+    }, [setTeamData])
+  );
+
   const confirmEndSession = () => {
     Alert.alert(
       "End Session",
@@ -89,7 +101,7 @@ export default function Page() {
 
   const handleExitHistorical = async () => {
     if (previousSession) {
-      await AsyncStorage.setItem('currentSession', previousSession);
+      await AsyncStorage.setItem('currentSession', '');
     }
     router.push('/LoadSessionPage');
   };

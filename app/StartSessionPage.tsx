@@ -1,36 +1,21 @@
-// StartSessionPage.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Linking } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { useSensorData } from '@/context/SensorDataContext';
 
 export default function StartSessionPage() {
   const [sessionName, setSessionName] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  const { startNewSession } = useSensorData();
 
   useEffect(() => {
     const initializeStorage = async () => {
-      try {
-        const currentSession = await AsyncStorage.getItem('currentSession');
-        if (currentSession === null) {
-          await AsyncStorage.setItem('currentSession', '');
-        }
-
-        const existingSessions = await AsyncStorage.getItem('sessions');
-        if (existingSessions === null) {
-          await AsyncStorage.setItem('sessions', JSON.stringify([]));
-        } else if (currentSession) {
-          router.push('/teamPage');
-        }
-
-        const previousSessions = await AsyncStorage.getItem('previousSessions');
-        if (previousSessions === null) {
-          await AsyncStorage.setItem('previousSessions', JSON.stringify([]));
-        }
-      } catch (e) {
-        console.error('Failed to initialize storage.', e);
+      const currentSession = await AsyncStorage.getItem('currentSession');
+      if (currentSession) {
+        router.push('/teamPage');
       }
     };
 
@@ -43,20 +28,10 @@ export default function StartSessionPage() {
       return;
     }
     try {
-      const existingSessions = JSON.parse(await AsyncStorage.getItem('sessions') || '[]');
-      let newSessionName = sessionName.trim();
-  
-      // Continuously append ' New' until a unique session name is found
-      while (existingSessions.includes(newSessionName)) {
-        newSessionName += ' New';
-      }
-  
-      await AsyncStorage.setItem('currentSession', newSessionName);
-      existingSessions.push(newSessionName);
-      await AsyncStorage.setItem('sessions', JSON.stringify(existingSessions));
+      startNewSession(sessionName.trim());
       router.push('/teamPage');
     } catch (error) {
-      setError('Error saving session name. Please try again.');
+      setError('Error starting new session. Please try again.');
     }
   };
 

@@ -1,67 +1,101 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta';
 
-// AsyncStorage.clear()
+interface SensorData {
+  accels: number[];
+  lowaccels: number[];
+  medaccels: number[];
+  highaccels: number[];
+  risk?: string;
+  riskNum?: number;
+}
 
-const connectionIP = 'http://192.168.4.1';
-
-interface SensorDataContextType {
+interface SensorDataContextProps {
   teamData: TeamDataRow[];
   loading: boolean;
+  setTeamData: (data: TeamDataRow[]) => void;
+  saveMacDataMap: (macDataMap: Record<string, SensorData>) => Promise<void>;
+  startNewSession: (sessionName: string) => void;
 }
 
 interface SensorDataProviderProps {
   children: ReactNode;
 }
 
-const SensorDataContext = createContext<SensorDataContextType>({
-  teamData: [],
-  loading: true,
-});
-
-export const useSensorData = () => useContext(SensorDataContext);
+const SensorDataContext = createContext<SensorDataContextProps | undefined>(undefined);
 
 export const SensorDataProvider: React.FC<SensorDataProviderProps> = ({ children }) => {
   const [teamData, setTeamData] = useState<TeamDataRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const loadMacDataMap = async (): Promise<Record<string, SensorData>> => {
+    try {
+      const storedData = await AsyncStorage.getItem('macDataMap');
+      return storedData ? JSON.parse(storedData) : {};
+    } catch (error) {
+      console.error('Error loading data from AsyncStorage:', error);
+      return {};
+    }
+  };
+
+  const saveMacDataMap = async (macDataMap: Record<string, SensorData>) => {
+    try {
+      await AsyncStorage.setItem('macDataMap', JSON.stringify(macDataMap));
+    } catch (error) {
+      console.error('Error saving data to AsyncStorage:', error);
+    }
+  };
+
+  const startNewSession = async (sessionName: string) => {
+    try {
+      await AsyncStorage.setItem('currentSession', sessionName);
+      setTeamData([]); // Clear the current team data
+    } catch (error) {
+      console.error('Error starting new session:', error);
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    const macDataMap = await loadMacDataMap();
+    const formattedData = formatMacData(macDataMap);
+    setTeamData(formattedData);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const currentSession = await AsyncStorage.getItem('currentSession');
-        if (currentSession) {
-          const data: TeamDataRow[] = await fetchAndFormatSensorData(connectionIP);
-          setTeamData(data);
-          setLoading(false);
-
-          // Store the session data in previousSessions
-          const previousSessions = JSON.parse(await AsyncStorage.getItem('previousSessions') || '[]');
-          const sessionIndex = previousSessions.findIndex((session: any) => session.sessionName === currentSession);
-          if (sessionIndex !== -1) {
-            previousSessions[sessionIndex].data = data;
-          } else {
-            previousSessions.push({ sessionName: currentSession, data });
-          }
-          await AsyncStorage.setItem('previousSessions', JSON.stringify(previousSessions));
-        } else {
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error fetching team data:', error);
-        setLoading(false);
-      }
-    };
-
     fetchData();
-    const intervalId = setInterval(fetchData, 1000);
+    const interval = setInterval(fetchData, 10000); // Fetch data every 10 seconds
 
-    return () => clearInterval(intervalId);
+    return () => clearInterval(interval); // Cleanup interval on component unmount
   }, []);
 
+  const formatMacData = (macDataMap: Record<string, SensorData>): TeamDataRow[] => {
+    return Object.entries(macDataMap).map(([mac, data]) => {
+      return [
+        mac,
+        data.lowaccels.length,
+        data.medaccels.length,
+        data.highaccels.length,
+        data.risk || "V. High",
+        data.riskNum !== undefined ? data.riskNum : 100,
+        data.accels,
+      ];
+    });
+  };
+
   return (
-    <SensorDataContext.Provider value={{ teamData, loading }}>
+    <SensorDataContext.Provider value={{ teamData, loading, setTeamData, saveMacDataMap, startNewSession }}>
       {children}
     </SensorDataContext.Provider>
   );
+};
+
+export const useSensorData = (): SensorDataContextProps => {
+  const context = useContext(SensorDataContext);
+  if (context === undefined) {
+    throw new Error('useSensorData must be used within a SensorDataProvider');
+  }
+  return context;
 };

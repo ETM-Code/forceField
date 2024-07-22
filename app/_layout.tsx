@@ -10,6 +10,10 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { NativeWindStyleSheet } from "nativewind";
 import { SensorDataProvider } from '@/context/SensorDataContext';
 
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();//Ignore all log notifications
+
 NativeWindStyleSheet.setOutput({
   default: "native",
 });
@@ -41,7 +45,7 @@ export default function RootLayout() {
           <Stack.Screen name="teamPage" options={{ headerShown: false }} />
           <Stack.Screen name="StartSessionPage" options={{ headerShown: false }} />
           <Stack.Screen name="LoadSessionPage" options={{ headerShown: false }} />
-          <Stack.Screen name="teamMemberDetail"/>
+          <Stack.Screen name="teamMemberDetail" options={{headerShown: false}}/>
         </Stack>
       </SensorDataProvider>
     </ThemeProvider>
