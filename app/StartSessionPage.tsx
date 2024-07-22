@@ -11,12 +11,23 @@ export default function StartSessionPage() {
   const router = useRouter();
 
   useEffect(() => {
-    AsyncStorage.setItem('checkNetwork', 'yes');
+    const setCheckNetwork = async () => {
+      try {
+        await AsyncStorage.setItem('checkNetwork', 'yes');
+        await AsyncStorage.setItem('holdingSession', '');
+        console.log('checkNetwork set to yes');
+      } catch (error) {
+        console.error('Error setting checkNetwork:', error);
+      }
+    };
+
+    setCheckNetwork();
   }, []);
 
   useEffect(() => {
     const initializeStorage = async () => {
       try {
+        await AsyncStorage.setItem('leftLoad', 'yes');
         const currentSession = await AsyncStorage.getItem('currentSession');
         if (currentSession === null) {
           await AsyncStorage.setItem('currentSession', '');

@@ -13,8 +13,35 @@ import BackgroundImage from '../assets/images/helmet.png';
 import LogoImage from '../assets/images/Force.png'; // Replace with your logo image path
 
 const HomePage: React.FC = () => {
+
+  useEffect(() => {
+    console.log("Current Session: ", AsyncStorage.getItem('currentSession'))
+    const manageSession = async () => {
+      try {
+        const holdingSesh = await AsyncStorage.getItem('holdingSession');
+        await AsyncStorage.setItem('leftLoad', 'yes');
+        if (holdingSesh) {
+          await AsyncStorage.setItem('currentSession', holdingSesh);
+          await AsyncStorage.setItem('holdingSession', '');
+        }
+        else{await AsyncStorage.setItem('currentSession', '');
+          await AsyncStorage.setItem('holdingSession', '');
+        }
+      } catch (error) {
+        console.error('Error managing sessions:', error);
+      }
+    };
+
+    manageSession();
+  }, []);
+
+
+  useEffect(() => {
+    AsyncStorage.setItem('checkNetwork', 'no');
+  }, []);
   useEffect(() => {
     AsyncStorage.setItem('checkNetwork', 'yes');
+    
   }, []);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const router = useRouter();

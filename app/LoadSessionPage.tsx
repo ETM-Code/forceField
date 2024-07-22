@@ -15,6 +15,27 @@ export default function LoadSessionPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const router = useRouter();
 
+  useEffect(() => {
+    const manageSession = async () => {
+      try {
+        const currentSesh = await AsyncStorage.getItem('currentSession');
+        const leftLoad = await AsyncStorage.getItem('leftLoad');
+        
+        if (currentSesh && leftLoad!='no') {
+          await AsyncStorage.setItem('holdingSession', currentSesh);
+          console.log('Holding session set successfully');
+        }
+        
+      } catch (error) {
+        console.error('Error managing sessions:', error);
+      }
+      const leftLoad = await AsyncStorage.setItem('leftLoad', 'no');
+      
+    };
+
+    manageSession();
+  }, []);
+
 
   useEffect(() => {
     AsyncStorage.setItem('checkNetwork', 'no');
@@ -86,9 +107,28 @@ export default function LoadSessionPage() {
     return `${headers}\n${rows}`;
   };
 
+  const handlePress = async () => {
+    try {
+      // Update the AsyncStorage value
+      let holdingSesh = await AsyncStorage.getItem('holdingSession')
+      if (holdingSesh){
+      await AsyncStorage.setItem('currentSession', holdingSesh);}
+      else {await AsyncStorage.setItem('currentSession', '');}
+
+      // Navigate to the home screen
+      router.push('/');
+    } catch (error) {
+      console.error('Error updating AsyncStorage:', error);
+    }
+  };
+
+
+
   return (
+
+
     <View style={styles.container}>
-      <TouchableOpacity style={styles.homeButton} onPress={() => router.push('/')}>
+      <TouchableOpacity style={styles.homeButton} onPress={handlePress}>
         <Ionicons name="home" size={24} color="black" />
       </TouchableOpacity>
       <Text style={styles.header}>Load Session</Text>

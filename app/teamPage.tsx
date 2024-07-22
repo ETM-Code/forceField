@@ -27,8 +27,10 @@ export default function Page() {
   const { historical } = useLocalSearchParams();
 
   useEffect(() => {
+    
     const getSessionName = async () => {
       const currentSession = await AsyncStorage.getItem('currentSession');
+      await AsyncStorage.setItem('holdingSession', '');
       setSessionName(currentSession);
 
       if (historical && currentSession) {

@@ -45,6 +45,11 @@ const loadMacDataMap = async (sessionName: string): Promise<Record<string, Senso
 };
 
 const saveMacDataMap = async (sessionName: string, macDataMap: Record<string, SensorData>) => {
+  const checkNetwork = await AsyncStorage.getItem('checkNetwork');
+  if (checkNetwork === 'no') {
+    console.log('Network check is "no", modifications are disabled');
+    return;
+  }
   try {
     await AsyncStorage.setItem(sessionName, JSON.stringify(macDataMap));
   } catch (error) {
@@ -105,6 +110,8 @@ const assignLevels = (data: SensorData) => {
 
 const processSensorData = async (sessionName: string, preContents: string[]): Promise<Record<string, SensorData>> => {
   const macDataMap = await loadMacDataMap(sessionName);
+  const checkNetwork = await AsyncStorage.getItem('checkNetwork');
+  const allowModification = checkNetwork !== 'no';
 
   preContents.forEach(content => {
     const macMatch = content.match(/Received sensor data from MAC: ([\w:]+)/);
@@ -124,15 +131,20 @@ const processSensorData = async (sessionName: string, preContents: string[]): Pr
         };
       }
 
-      // Append the new sensor data to the arrays
-      macDataMap[macAddress].accels.push(...accels);
+      if (allowModification) {
+        // Append the new sensor data to the arrays
+        macDataMap[macAddress].accels.push(...accels);
 
-      // Assign levels and calculate risk
-      assignLevels(macDataMap[macAddress]);
+        // Assign levels and calculate risk
+        assignLevels(macDataMap[macAddress]);
+      }
     }
   });
 
-  await saveMacDataMap(sessionName, macDataMap);
+  if (allowModification) {
+    await saveMacDataMap(sessionName, macDataMap);
+  }
+
   return macDataMap;
 };
 
@@ -153,7 +165,6 @@ const formatMacData = (macDataMap: Record<string, SensorData>): TeamDataRow[] =>
 };
 
 export const fetchAndFormatSensorData = async (url: string): Promise<TeamDataRow[]> => {
-  const checkNetwork = await AsyncStorage.getItem('checkNetwork')
   const currentSession = await AsyncStorage.getItem('currentSession');
   if (!currentSession) {
     console.error('Current session not found');
