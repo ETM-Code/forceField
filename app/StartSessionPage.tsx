@@ -11,6 +11,10 @@ export default function StartSessionPage() {
   const router = useRouter();
 
   useEffect(() => {
+    AsyncStorage.setItem('checkNetwork', 'yes');
+  }, []);
+
+  useEffect(() => {
     const initializeStorage = async () => {
       try {
         const currentSession = await AsyncStorage.getItem('currentSession');

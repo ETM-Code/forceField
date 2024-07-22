@@ -3,8 +3,6 @@ import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const DOMParser = require('react-native-html-parser').DOMParser;
 
-const LOCAL_STORAGE_KEY = 'macDataMap';
-
 const fetchHtmlPage = async (url: string): Promise<string> => {
   try {
     const response = await fetch(url);
@@ -36,9 +34,9 @@ interface SensorData {
   riskNum?: number;
 }
 
-const loadMacDataMap = async (): Promise<Record<string, SensorData>> => {
+const loadMacDataMap = async (sessionName: string): Promise<Record<string, SensorData>> => {
   try {
-    const storedData = await AsyncStorage.getItem(LOCAL_STORAGE_KEY);
+    const storedData = await AsyncStorage.getItem(sessionName);
     return storedData ? JSON.parse(storedData) : {};
   } catch (error) {
     console.error('Error loading data from AsyncStorage:', error);
@@ -46,9 +44,9 @@ const loadMacDataMap = async (): Promise<Record<string, SensorData>> => {
   }
 };
 
-const saveMacDataMap = async (macDataMap: Record<string, SensorData>) => {
+const saveMacDataMap = async (sessionName: string, macDataMap: Record<string, SensorData>) => {
   try {
-    await AsyncStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(macDataMap));
+    await AsyncStorage.setItem(sessionName, JSON.stringify(macDataMap));
   } catch (error) {
     console.error('Error saving data to AsyncStorage:', error);
   }
@@ -105,8 +103,8 @@ const assignLevels = (data: SensorData) => {
   }
 };
 
-const processSensorData = async (preContents: string[]): Promise<Record<string, SensorData>> => {
-  const macDataMap = await loadMacDataMap();
+const processSensorData = async (sessionName: string, preContents: string[]): Promise<Record<string, SensorData>> => {
+  const macDataMap = await loadMacDataMap(sessionName);
 
   preContents.forEach(content => {
     const macMatch = content.match(/Received sensor data from MAC: ([\w:]+)/);
@@ -134,7 +132,7 @@ const processSensorData = async (preContents: string[]): Promise<Record<string, 
     }
   });
 
-  await saveMacDataMap(macDataMap);
+  await saveMacDataMap(sessionName, macDataMap);
   return macDataMap;
 };
 
@@ -155,6 +153,13 @@ const formatMacData = (macDataMap: Record<string, SensorData>): TeamDataRow[] =>
 };
 
 export const fetchAndFormatSensorData = async (url: string): Promise<TeamDataRow[]> => {
+  const checkNetwork = await AsyncStorage.getItem('checkNetwork')
+  const currentSession = await AsyncStorage.getItem('currentSession');
+  if (!currentSession) {
+    console.error('Current session not found');
+    return [];
+  }
+
   // Step 1: Fetch the HTML page
   const htmlText = await fetchHtmlPage(url);
 
@@ -162,7 +167,7 @@ export const fetchAndFormatSensorData = async (url: string): Promise<TeamDataRow
   const preContents = parseHtmlContent(htmlText);
 
   // Step 3: Process the extracted text to build a map of MAC addresses to sensor data
-  const macDataMap = await processSensorData(preContents);
+  const macDataMap = await processSensorData(currentSession, preContents);
 
   // Step 4: Format the processed data into the desired format
   const formattedData = formatMacData(macDataMap);

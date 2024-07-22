@@ -6,12 +6,16 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Font from 'expo-font';
 import { Poppins_400Regular, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import AppLoading from 'expo-app-loading';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import the images
 import BackgroundImage from '../assets/images/helmet.png';
 import LogoImage from '../assets/images/Force.png'; // Replace with your logo image path
 
 const HomePage: React.FC = () => {
+  useEffect(() => {
+    AsyncStorage.setItem('checkNetwork', 'yes');
+  }, []);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const router = useRouter();
 

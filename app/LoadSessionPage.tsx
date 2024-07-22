@@ -15,6 +15,11 @@ export default function LoadSessionPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const router = useRouter();
 
+
+  useEffect(() => {
+    AsyncStorage.setItem('checkNetwork', 'no');
+  }, []);
+
   useEffect(() => {
     const loadSessions = async () => {
       const storedSessions = await AsyncStorage.getItem('previousSessions');

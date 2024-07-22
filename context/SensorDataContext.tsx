@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta';
+import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta'; // Adjusted import path
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // AsyncStorage.clear()
