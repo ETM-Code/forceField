@@ -60,7 +60,8 @@ export default function Page() {
 
   const saveSessionData = async () => {
     const previousSessions = JSON.parse(await AsyncStorage.getItem('previousSessions') || '[]');
-    const newSession = { sessionName: sessionName, data: teamData };
+    const macList = JSON.parse(await AsyncStorage.getItem(`${sessionName}_macList`) || '[]'); // Load the macList
+    const newSession = { sessionName: sessionName, data: teamData, macList };
     previousSessions.push(newSession);
     await AsyncStorage.setItem('previousSessions', JSON.stringify(previousSessions));
   };

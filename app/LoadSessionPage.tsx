@@ -9,6 +9,7 @@ import * as Sharing from 'expo-sharing';
 interface Session {
   sessionName: string;
   data: any; // Adjust the type of `data` according to the actual structure of your session data
+  macList: string[]; // Ensure macList is included
 }
 
 export default function LoadSessionPage() {
@@ -21,21 +22,18 @@ export default function LoadSessionPage() {
         const currentSesh = await AsyncStorage.getItem('currentSession');
         const leftLoad = await AsyncStorage.getItem('leftLoad');
         
-        if (currentSesh && leftLoad!='no') {
+        if (currentSesh && leftLoad !== 'no') {
           await AsyncStorage.setItem('holdingSession', currentSesh);
           console.log('Holding session set successfully');
         }
-        
       } catch (error) {
         console.error('Error managing sessions:', error);
       }
-      const leftLoad = await AsyncStorage.setItem('leftLoad', 'no');
-      
+      await AsyncStorage.setItem('leftLoad', 'no');
     };
 
     manageSession();
   }, []);
-
 
   useEffect(() => {
     AsyncStorage.setItem('checkNetwork', 'no');
@@ -56,8 +54,12 @@ export default function LoadSessionPage() {
   }, []);
 
   const handleLoadSession = async (sessionName: string) => {
-    await AsyncStorage.setItem('currentSession', sessionName);
-    router.push('/teamPage?historical=true');
+    const session = sessions.find(s => s.sessionName === sessionName);
+    if (session) {
+      await AsyncStorage.setItem('currentSession', sessionName);
+      await AsyncStorage.setItem(`${sessionName}_macList`, JSON.stringify(session.macList)); // Ensure macList is set
+      router.push('/teamPage?historical=true');
+    }
   };
 
   const handleDeleteSession = async (sessionName: string) => {
@@ -110,10 +112,12 @@ export default function LoadSessionPage() {
   const handlePress = async () => {
     try {
       // Update the AsyncStorage value
-      let holdingSesh = await AsyncStorage.getItem('holdingSession')
-      if (holdingSesh){
-      await AsyncStorage.setItem('currentSession', holdingSesh);}
-      else {await AsyncStorage.setItem('currentSession', '');}
+      const holdingSesh = await AsyncStorage.getItem('holdingSession');
+      if (holdingSesh) {
+        await AsyncStorage.setItem('currentSession', holdingSesh);
+      } else {
+        await AsyncStorage.setItem('currentSession', '');
+      }
 
       // Navigate to the home screen
       router.push('/');
@@ -122,11 +126,7 @@ export default function LoadSessionPage() {
     }
   };
 
-
-
   return (
-
-
     <View style={styles.container}>
       <TouchableOpacity style={styles.homeButton} onPress={handlePress}>
         <Ionicons name="home" size={24} color="black" />
@@ -149,6 +149,7 @@ export default function LoadSessionPage() {
             </View>
           </View>
         ))}
+        <View className='py-80'></View>
       </ScrollView>
     </View>
   );

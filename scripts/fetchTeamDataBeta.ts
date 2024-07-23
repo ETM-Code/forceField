@@ -44,7 +44,7 @@ const loadMacDataMap = async (sessionName: string): Promise<Record<string, Senso
   }
 };
 
-const saveMacDataMap = async (sessionName: string, macDataMap: Record<string, SensorData>) => {
+const saveMacDataMap = async (sessionName: string, macDataMap: Record<string, SensorData>, macList: string[]) => {
   const checkNetwork = await AsyncStorage.getItem('checkNetwork');
   if (checkNetwork === 'no') {
     console.log('Network check is "no", modifications are disabled');
@@ -52,6 +52,7 @@ const saveMacDataMap = async (sessionName: string, macDataMap: Record<string, Se
   }
   try {
     await AsyncStorage.setItem(sessionName, JSON.stringify(macDataMap));
+    await AsyncStorage.setItem(`${sessionName}_macList`, JSON.stringify(macList));
   } catch (error) {
     console.error('Error saving data to AsyncStorage:', error);
   }
@@ -64,7 +65,6 @@ const assignLevels = (data: SensorData) => {
 
   // Classify the accels values into different levels
   data.accels.forEach(value => {
-    data.lowaccels.push(value); //for testing only, comment out **********************************
     if (value > 35.9 && value < 46.5) {
       data.lowaccels.push(value);
     } else if (value >= 46.5 && value < 52.0) {
@@ -97,11 +97,11 @@ const assignLevels = (data: SensorData) => {
   data.riskNum = trueRisk;
 
   // Assign risk based on riskNum
-  if (data.riskNum < 10) {
+  if (data.riskNum > 10) {
     data.risk = "Low";
-  } else if (data.riskNum < 25) {
+  } else if (data.riskNum > 25) {
     data.risk = "Med";
-  } else if (data.riskNum < 40) {
+  } else if (data.riskNum > 40) {
     data.risk = "High";
   } else {
     data.risk = "V. high";
@@ -110,6 +110,7 @@ const assignLevels = (data: SensorData) => {
 
 const processSensorData = async (sessionName: string, preContents: string[]): Promise<Record<string, SensorData>> => {
   const macDataMap = await loadMacDataMap(sessionName);
+  const macList = JSON.parse(await AsyncStorage.getItem(`${sessionName}_macList`) || '[]');
   const checkNetwork = await AsyncStorage.getItem('checkNetwork');
   const allowModification = checkNetwork !== 'no';
 
@@ -120,6 +121,11 @@ const processSensorData = async (sessionName: string, preContents: string[]): Pr
     if (macMatch && dataMatch) {
       const macAddress = macMatch[1];
       const accels = dataMatch[1].trim().split(/\s+/).map(parseFloat); // Use parseFloat here
+
+      // Add MAC address to the list if not already present
+      if (!macList.includes(macAddress)) {
+        macList.push(macAddress);
+      }
 
       // Initialize new arrays if the MAC address is not already in the map
       if (!macDataMap[macAddress]) {
@@ -142,7 +148,7 @@ const processSensorData = async (sessionName: string, preContents: string[]): Pr
   });
 
   if (allowModification) {
-    await saveMacDataMap(sessionName, macDataMap);
+    await saveMacDataMap(sessionName, macDataMap, macList);
   }
 
   return macDataMap;

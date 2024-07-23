@@ -32,6 +32,8 @@ export const SensorDataProvider: React.FC<SensorDataProviderProps> = ({ children
         const currentSession = await AsyncStorage.getItem('currentSession');
         if (currentSession) {
           const data: TeamDataRow[] = await fetchAndFormatSensorData(connectionIP);
+          const macList = JSON.parse(await AsyncStorage.getItem(`${currentSession}_macList`) || '[]');
+
           setTeamData(data);
           setLoading(false);
 
@@ -41,7 +43,7 @@ export const SensorDataProvider: React.FC<SensorDataProviderProps> = ({ children
           if (sessionIndex !== -1) {
             previousSessions[sessionIndex].data = data;
           } else {
-            previousSessions.push({ sessionName: currentSession, data });
+            previousSessions.push({ sessionName: currentSession, data, macList });
           }
           await AsyncStorage.setItem('previousSessions', JSON.stringify(previousSessions));
         } else {

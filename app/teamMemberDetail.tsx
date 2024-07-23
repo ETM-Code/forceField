@@ -19,12 +19,16 @@ const TeamMemberDetail: React.FC = () => {
   const [accelerationData, setAccelerationData] = useState<number[]>([]);
 
   useEffect(() => {
+    // console.log("Using effect")
     const memberData = teamData.find(row => row[0] === playerName);
     if (memberData) {
+      // console.log("member data exists");
       const validAccels = memberData[6].filter(value => !isNaN(value) && isFinite(value));
       setAccelerationData(validAccels);
       setMemberData(memberData);
+      // console.log("Accels: ", memberData[6])
     } else {
+      // console.log("member data doesn't exist");
       setAccelerationData([]);
       setMemberData(null);
     }
@@ -39,62 +43,46 @@ const TeamMemberDetail: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerText}>{playerName}</Text>
-      </View>
-      <View style={styles.chartContainer}>
-        <View style={styles.yAxisContainer}>
-          <Text style={styles.yAxisLabel}>Acceleration (g)</Text>
-        </View>
-        <ScrollView horizontal>
-          <LineChart
-            data={{
-              labels: accelerationData.map((_, index) => index.toString()),
-              datasets: [
-                {
-                  data: accelerationData,
-                },
-              ],
-            }}
-            width={screenWidth * 2} // make the chart width double to make it scrollable
-            height={220}
-            yAxisLabel=""
-            yAxisSuffix="g"
-            yAxisInterval={1}
-            chartConfig={{
-              backgroundColor: '#333',
-              backgroundGradientFrom: '#333',
-              backgroundGradientTo: '#333',
-              decimalPlaces: 2, // optional, defaults to 2dp
-              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-              style: {
-                borderRadius: 16,
-              },
-              propsForDots: {
-                r: '0', // Remove dots
-              },
-              propsForBackgroundLines: {
-                strokeDasharray: '', // solid background lines with no dashes
-              },
-            }}
-            style={styles.chart}
-            withDots={false} // Ensure no dots are displayed
-          />
-        </ScrollView>
-        {memberData && (
-          <TeamMember
-            playerName={memberData[0]}
-            number1={memberData[1]}
-            number2={memberData[2]}
-            number3={memberData[3]}
-            risk={memberData[4]}
-            accels={memberData[6]}
-          />
-        )}
-      </View>
-    </View>
+  
+
+        <LineChart
+    data={{
+      labels: ["January", "February", "March", "April", "May", "June"],
+      datasets: [
+        {
+          data: accelerationData
+        }
+      ]
+    }}
+    width={Dimensions.get("window").width} // from react-native
+    height={220}
+    yAxisLabel="$"
+    yAxisSuffix="k"
+    yAxisInterval={1} // optional, defaults to 1
+    chartConfig={{
+      backgroundColor: "#e26a00",
+      backgroundGradientFrom: "#fb8c00",
+      backgroundGradientTo: "#ffa726",
+      decimalPlaces: 2, // optional, defaults to 2dp
+      color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+      labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+      style: {
+        borderRadius: 16
+      },
+      propsForDots: {
+        r: "0",
+        strokeWidth: "2",
+        stroke: "#ffa726"
+      }
+    }}
+    bezier
+    style={{
+      marginVertical: 8,
+      borderRadius: 16
+    }}
+  />
+
+
   );
 };
 
