@@ -6,6 +6,8 @@ import { RootStackParamList } from './NavigationTypes';
 import { useSensorData } from '@/context/SensorDataContext';
 import { TeamDataRow } from '@/scripts/fetchTeamDataBeta';
 import TeamMember from '@/components/teamMember';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -17,21 +19,52 @@ const TeamMemberDetail: React.FC = () => {
   const { teamData, loading } = useSensorData();
   const [memberData, setMemberData] = useState<TeamDataRow | null>(null);
   const [accelerationData, setAccelerationData] = useState<number[]>([]);
+  const [historicalData, setHistoricalData] = useState<TeamDataRow | null>(null);
+  const [historicalAccelerationData, setHistoricalAccelerationData] = useState<number[]>([]);
+  const router = useRouter();
+  const { historical } = useLocalSearchParams();
 
   useEffect(() => {
-    // console.log("Using effect")
-    const memberData = teamData.find(row => row[0] === playerName);
-    if (memberData) {
-      // console.log("member data exists");
-      const validAccels = memberData[6].filter(value => !isNaN(value) && isFinite(value));
-      setAccelerationData(validAccels);
-      setMemberData(memberData);
-      // console.log("Accels: ", memberData[6])
-    } else {
-      // console.log("member data doesn't exist");
-      setAccelerationData([]);
-      setMemberData(null);
-    }
+    const getHistoricalData = async () => {
+      const currentSession = await AsyncStorage.getItem('currentSession');
+      if (historical && currentSession) {
+        const previousSessions = JSON.parse(await AsyncStorage.getItem('previousSessions') || '[]');
+        const sessionData = previousSessions.find((session: any) => session.sessionName === currentSession);
+        if (sessionData) {
+          const memberData = sessionData.data.find((row: TeamDataRow) => row[0] === playerName);
+          if (memberData) {
+            const validAccels = memberData[6].filter((value: any) => !isNaN(value) && isFinite(value));
+            setHistoricalData(memberData);
+            setHistoricalAccelerationData(validAccels);
+          }
+        }
+      }
+    };
+
+    getHistoricalData();
+  }, [historical, playerName]);
+
+  useEffect(() => {
+    const updateData = () => {
+      const memberData = teamData.find(row => row[0] === playerName);
+      if (memberData) {
+        const validAccels = memberData[6].filter(value => !isNaN(value) && isFinite(value));
+        setAccelerationData(validAccels);
+        setMemberData(memberData);
+      } else {
+        setAccelerationData([0, 0, 0, 0, 0]);
+        setMemberData(null);
+      }
+    };
+
+    // Initial data load
+    updateData();
+
+    // Set up interval for updating data
+    const intervalId = setInterval(updateData, 1000); // Update every second
+
+    // Clear interval on component unmount
+    return () => clearInterval(intervalId);
   }, [teamData, playerName]);
 
   if (loading) {
@@ -42,47 +75,70 @@ const TeamMemberDetail: React.FC = () => {
     );
   }
 
+  const displayData = historical ? historicalAccelerationData : accelerationData;
+  const displayMemberData = historical ? historicalData : memberData;
+
   return (
-  
-
-        <LineChart
-    data={{
-      labels: ["January", "February", "March", "April", "May", "June"],
-      datasets: [
-        {
-          data: accelerationData
-        }
-      ]
-    }}
-    width={Dimensions.get("window").width} // from react-native
-    height={220}
-    yAxisLabel="$"
-    yAxisSuffix="k"
-    yAxisInterval={1} // optional, defaults to 1
-    chartConfig={{
-      backgroundColor: "#e26a00",
-      backgroundGradientFrom: "#fb8c00",
-      backgroundGradientTo: "#ffa726",
-      decimalPlaces: 2, // optional, defaults to 2dp
-      color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-      labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-      style: {
-        borderRadius: 16
-      },
-      propsForDots: {
-        r: "0",
-        strokeWidth: "2",
-        stroke: "#ffa726"
-      }
-    }}
-    bezier
-    style={{
-      marginVertical: 8,
-      borderRadius: 16
-    }}
-  />
-
-
+    <View style={styles.container}>
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerText}>{playerName}</Text>
+      </View>
+      <View style={styles.chartContainer}>
+        <View style={styles.yAxisContainer}>
+          <Text style={styles.yAxisLabel}>Acceleration (g)</Text>
+        </View>
+        <ScrollView horizontal>
+          {displayData.length > 0 ? (
+            <LineChart
+              data={{
+                labels: displayData.map((_, index) => index.toString()),
+                datasets: [
+                  {
+                    data: displayData
+                  }
+                ]
+              }}
+              width={screenWidth * (displayData.length / 5)}
+              height={220}
+              yAxisLabel=""
+              yAxisSuffix="g"
+              yAxisInterval={1}
+              chartConfig={{
+                backgroundColor: '#333',
+                backgroundGradientFrom: '#333',
+                backgroundGradientTo: '#333',
+                decimalPlaces: 2,
+                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                style: {
+                  borderRadius: 16,
+                },
+                propsForDots: {
+                  r: '0', // Remove dots
+                },
+                propsForBackgroundLines: {
+                  strokeDasharray: '', // solid background lines with no dashes
+                },
+              }}
+              style={styles.chart}
+              withDots={false} // Ensure no dots are displayed
+            />
+          ) : (
+            <Text style={styles.waitingText}>No valid data available</Text>
+          )}
+        </ScrollView>
+        {displayMemberData && (
+          <TeamMember
+            playerName={displayMemberData[0]}
+            number1={displayMemberData[1]}
+            number2={displayMemberData[2]}
+            number3={displayMemberData[3]}
+            risk={displayMemberData[4]}
+            accels={displayMemberData[6]}
+          />
+        )}
+      </View>
+    </View>
   );
 };
 

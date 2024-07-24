@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta'; // Adjusted import path
+import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // AsyncStorage.clear()
@@ -42,6 +42,7 @@ export const SensorDataProvider: React.FC<SensorDataProviderProps> = ({ children
           const sessionIndex = previousSessions.findIndex((session: any) => session.sessionName === currentSession);
           if (sessionIndex !== -1) {
             previousSessions[sessionIndex].data = data;
+            previousSessions[sessionIndex].macList = macList;
           } else {
             previousSessions.push({ sessionName: currentSession, data, macList });
           }
@@ -50,7 +51,7 @@ export const SensorDataProvider: React.FC<SensorDataProviderProps> = ({ children
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error fetching team data:', error);
+        // console.error('Error fetching team data:', error);
         setLoading(false);
       }
     };

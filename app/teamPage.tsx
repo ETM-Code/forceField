@@ -5,36 +5,37 @@ import { useSensorData } from '@/context/SensorDataContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import NetInfo from '@react-native-community/netinfo';
+import { fetchAndFormatSensorData, TeamDataRow } from '@/scripts/fetchTeamDataBeta';
 import 'nativewind';
 import TeamMember from '@/components/teamMember';
 import { Banner } from '@/components/teamMember';
-
-interface TeamMemberData {
-  playerName: string;
-  number1: number;
-  number2: number;
-  number3: number;
-  risk: string;
-  accels: number[];
-}
 
 export default function Page() {
   const [sessionName, setSessionName] = useState<string | null>(null);
   const [isConnectedToWifi, setIsConnectedToWifi] = useState<boolean | null>(null);
   const [previousSession, setPreviousSession] = useState<string | null>(null);
+  const [macList, setMacList] = useState<string[]>([]);
+  const [historicalTeamData, setHistoricalTeamData] = useState<TeamDataRow[]>([]);
   const router = useRouter();
   const { teamData, loading } = useSensorData();
   const { historical } = useLocalSearchParams();
 
   useEffect(() => {
-    
     const getSessionName = async () => {
       const currentSession = await AsyncStorage.getItem('currentSession');
-      await AsyncStorage.setItem('holdingSession', '');
+      // await AsyncStorage.setItem('holdingSession', '');
       setSessionName(currentSession);
 
       if (historical && currentSession) {
         setPreviousSession(currentSession);
+        const loadedMacList = JSON.parse(await AsyncStorage.getItem(`${currentSession}_macList`) || '[]');
+        setMacList(loadedMacList);
+
+        const previousSessions = JSON.parse(await AsyncStorage.getItem('previousSessions') || '[]');
+        const sessionData = previousSessions.find((session: any) => session.sessionName === currentSession);
+        if (sessionData) {
+          setHistoricalTeamData(sessionData.data);
+        }
       }
     };
 
@@ -60,7 +61,6 @@ export default function Page() {
 
   const saveSessionData = async () => {
     const previousSessions = JSON.parse(await AsyncStorage.getItem('previousSessions') || '[]');
-    const macList = JSON.parse(await AsyncStorage.getItem(`${sessionName}_macList`) || '[]'); // Load the macList
     const newSession = { sessionName: sessionName, data: teamData, macList };
     previousSessions.push(newSession);
     await AsyncStorage.setItem('previousSessions', JSON.stringify(previousSessions));
@@ -131,7 +131,7 @@ export default function Page() {
       <View style={styles.content}>
         <Banner />
         <ScrollView>
-          {teamData.map((member, index) => (
+          {(historical ? historicalTeamData : teamData).map((member, index) => (
             <TeamMember
               key={index}
               playerName={member[0]}
@@ -212,5 +212,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#d9d9d9',
     padding: 10,
     borderRadius: 10,
+  },
+  macText: {
+    color: 'black',
+    fontSize: 14,
+    textAlign: 'left',
   },
 });

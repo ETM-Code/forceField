@@ -9,7 +9,7 @@ const fetchHtmlPage = async (url: string): Promise<string> => {
     const htmlText = await response.text();
     return htmlText;
   } catch (error) {
-    console.error('Error fetching HTML page:', error);
+    // console.error('Error fetching HTML page:', error);
     return ''; // Return an empty string in case of error
   }
 };
@@ -97,11 +97,11 @@ const assignLevels = (data: SensorData) => {
   data.riskNum = trueRisk;
 
   // Assign risk based on riskNum
-  if (data.riskNum > 10) {
+  if (data.riskNum < 10) {
     data.risk = "Low";
-  } else if (data.riskNum > 25) {
+  } else if (data.riskNum < 25) {
     data.risk = "Med";
-  } else if (data.riskNum > 40) {
+  } else if (data.riskNum < 40) {
     data.risk = "High";
   } else {
     data.risk = "V. high";
