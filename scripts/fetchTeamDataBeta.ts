@@ -1,3 +1,18 @@
+// Modify my react native code in the following ways:
+// - It should work with the new tcp server binary transmission methods. Remember to use the tcp-socket library if necessary, among other required tools.
+// - It should take the first 3,000 uint8_t's as acceleration, in the ordering x,y,z,x,y,z  and find the absolute values of each trio of acceleration data, storing the resulting values in the accels array, which, as can be seen from the code, is later used to calculate risk values
+// - The next 3,000 uint8_t's should be taken as angular velocity, in the ordering x,y,z,x,y,z. From this, angular acceleration should be calculated assuming the time between each trio is 0.001s. The end accelerations should be assumed to be the same as the one before, in order to ensure the angular acceleration array adds up to 1,000 elements. From this, the absolute angular acceleration should also be calculated.
+// - make a note of anything added, removed or changed
+// - work through what you need to do step by step and ensure all code is of high quality
+// - note any considerations at the end
+// - make a note of any changes that will be required to be made to files that call the functions in this one
+// - note that all this compute should occur in the react app, rather than on the esp-32
+// - use vector3 structs where applicable
+// - ensure that asyncStorage is used in the same way it's currently used, ask if unsure
+
+
+
+
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
