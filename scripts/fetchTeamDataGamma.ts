@@ -1,31 +1,12 @@
-
-
-import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-const DOMParser = require('react-native-html-parser').DOMParser;
+import TcpSocket from 'react-native-tcp-socket';
 
-const fetchHtmlPage = async (url: string): Promise<string> => {
-  try {
-    const response = await fetch(url);
-    const htmlText = await response.text();
-    return htmlText;
-  } catch (error) {
-    // console.error('Error fetching HTML page:', error);
-    return ''; // Return an empty string in case of error
-  }
-};
-
-const parseHtmlContent = (htmlText: string): string[] => {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlText, 'text/html');
-  const preElements = doc.getElementsByTagName('pre');
-  if (preElements.length > 0) {
-    const preContent = preElements[0].textContent || '';
-    return preContent.split('\n\n');
-  }
-  return [];
-};
+interface Vector3 {
+  x: number;
+  y: number;
+  z: number;
+}
 
 interface SensorData {
   accels: number[];
@@ -65,7 +46,6 @@ const assignLevels = (data: SensorData) => {
   data.medaccels = [];
   data.highaccels = [];
 
-  // Classify the accels values into different levels
   data.accels.forEach(value => {
     if (value > 35.9 && value < 46.5) {
       data.lowaccels.push(value);
@@ -76,7 +56,6 @@ const assignLevels = (data: SensorData) => {
     }
   });
 
-  // Calculate riskNum
   let riskSum = 1;
   let trueRisk = 0;
 
@@ -98,7 +77,6 @@ const assignLevels = (data: SensorData) => {
 
   data.riskNum = trueRisk;
 
-  // Assign risk based on riskNum
   if (data.riskNum < 10) {
     data.risk = "Low";
   } else if (data.riskNum < 25) {
@@ -110,44 +88,58 @@ const assignLevels = (data: SensorData) => {
   }
 };
 
-const processSensorData = async (sessionName: string, preContents: string[]): Promise<Record<string, SensorData>> => {
+const processSensorData = async (sessionName: string, rawData: Uint8Array): Promise<Record<string, SensorData>> => {
   const macDataMap = await loadMacDataMap(sessionName);
   const macList = JSON.parse(await AsyncStorage.getItem(`${sessionName}_macList`) || '[]');
   const checkNetwork = await AsyncStorage.getItem('checkNetwork');
   const allowModification = checkNetwork !== 'no';
 
-  preContents.forEach(content => {
-    const macMatch = content.match(/Received sensor data from MAC: ([\w:]+)/);
-    const dataMatch = content.match(/Sensor data: ([\d.\s]+)/);
+  const macAddress = Array.from(rawData.slice(0, 6)).map(byte => byte.toString(16).padStart(2, '0')).join(':');
+  const accels: number[] = [];
+  const angularAccels: number[] = [];
 
-    if (macMatch && dataMatch) {
-      const macAddress = macMatch[1];
-      const accels = dataMatch[1].trim().split(/\s+/).map(parseFloat); // Use parseFloat here
+  for (let i = 6; i < 3006; i += 6) {
+    const x = rawData[i];
+    const y = rawData[i + 1];
+    const z = rawData[i + 2];
+    accels.push(Math.abs(x), Math.abs(y), Math.abs(z));
+  }
 
-      // Add MAC address to the list if not already present
-      if (!macList.includes(macAddress)) {
-        macList.push(macAddress);
-      }
+  for (let i = 3006; i < 6006; i += 6) {
+    const x1 = rawData[i];
+    const y1 = rawData[i + 1];
+    const z1 = rawData[i + 2];
+    const x2 = rawData[i + 6] || x1;
+    const y2 = rawData[i + 7] || y1;
+    const z2 = rawData[i + 8] || z1;
 
-      // Initialize new arrays if the MAC address is not already in the map
-      if (!macDataMap[macAddress]) {
-        macDataMap[macAddress] = {
-          accels: [],
-          lowaccels: [],
-          medaccels: [],
-          highaccels: [],
-        };
-      }
+    const angularAccelX = (x2 - x1) / 0.001;
+    const angularAccelY = (y2 - y1) / 0.001;
+    const angularAccelZ = (z2 - z1) / 0.001;
 
-      if (allowModification) {
-        // Append the new sensor data to the arrays
-        macDataMap[macAddress].accels.push(...accels);
+    angularAccels.push(Math.abs(angularAccelX), Math.abs(angularAccelY), Math.abs(angularAccelZ));
+  }
 
-        // Assign levels and calculate risk
-        assignLevels(macDataMap[macAddress]);
-      }
-    }
-  });
+  if (!macList.includes(macAddress)) {
+    macList.push(macAddress);
+  }
+
+  if (!macDataMap[macAddress]) {
+    macDataMap[macAddress] = {
+      accels: [],
+      lowaccels: [],
+      medaccels: [],
+      highaccels: [],
+    };
+  }
+
+  if (allowModification) {
+    macDataMap[macAddress].accels.push(...accels);
+    // Assuming angularAccels are stored similarly, adjust based on actual use case
+    macDataMap[macAddress].accels.push(...angularAccels);
+
+    assignLevels(macDataMap[macAddress]);
+  }
 
   if (allowModification) {
     await saveMacDataMap(sessionName, macDataMap, macList);
@@ -172,24 +164,39 @@ const formatMacData = (macDataMap: Record<string, SensorData>): TeamDataRow[] =>
   });
 };
 
-export const fetchAndFormatSensorData = async (url: string): Promise<TeamDataRow[]> => {
+export const fetchAndFormatSensorData = async (host: string, port: number): Promise<TeamDataRow[]> => {
   const currentSession = await AsyncStorage.getItem('currentSession');
   if (!currentSession) {
     console.error('Current session not found');
     return [];
   }
 
-  // Step 1: Fetch the HTML page
-  const htmlText = await fetchHtmlPage(url);
+  return new Promise((resolve, reject) => {
+    const client = TcpSocket.createConnection({ host, port }, () => {
+      client.write('GET / HTTP/1.1\r\n\r\n');
+    });
 
-  // Step 2: Parse the HTML content to extract the relevant text
-  const preContents = parseHtmlContent(htmlText);
+    client.on('data', async (data: string | Buffer) => {
+      if (typeof data === 'string') {
+        console.error('Received data in unexpected format');
+        reject(new Error('Received data in unexpected format'));
+        return;
+      }
+      const rawData = new Uint8Array(data.buffer);
+      const macDataMap = await processSensorData(currentSession, rawData);
+      const formattedData = formatMacData(macDataMap);
+      resolve(formattedData);
+      client.destroy();
+    });
 
-  // Step 3: Process the extracted text to build a map of MAC addresses to sensor data
-  const macDataMap = await processSensorData(currentSession, preContents);
+    client.on('error', (error) => {
+      console.error('TCP connection error:', error);
+      reject(error);
+      client.destroy();
+    });
 
-  // Step 4: Format the processed data into the desired format
-  const formattedData = formatMacData(macDataMap);
-
-  return formattedData;
+    client.on('close', () => {
+      console.log('Connection closed');
+    });
+  });
 };
