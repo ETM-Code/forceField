@@ -106,9 +106,10 @@ const assignLevels = (data: SensorData) => {
     data.risk = "Med";
   } else if (data.riskNum < 40) {
     data.risk = "High";
-  } else {
+  } else if (data.riskNum > 40){
     data.risk = "V. high";
   }
+  else {data.risk = "Low";}
 };
 //first 3K bytes are the X,Y,Z acceleration from the first mac address, and the next 3K bytes are the X,Y,Z rotational acceleration from the first mac address, and then the subsequent 6K bytes follow the same pattern but for the second stored mac address.  the mac addresses of the devices are at the end of the message
 
@@ -142,9 +143,9 @@ const processSensorData = async (
 
     // Extract X, Y, Z acceleration data (first 3K bytes)
     for (let i = baseIndex; i < baseIndex + 3000; i += 6) {
-      const x = rawData[i];
-      const y = rawData[i + 1];
-      const z = rawData[i + 2];
+      const x = rawData[i]/9.81;
+      const y = rawData[i + 1]/9.81;
+      const z = rawData[i + 2]/9.81;
       accels.push(Math.abs(x), Math.abs(y), Math.abs(z));
     }
 
