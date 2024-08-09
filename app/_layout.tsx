@@ -1,10 +1,10 @@
-// _layout.tsx
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { LogBox } from 'react-native'; // Import LogBox to suppress warnings and errors
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { NativeWindStyleSheet } from "nativewind";
@@ -16,6 +16,9 @@ NativeWindStyleSheet.setOutput({
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+// Ignore all logs (warnings and errors)
+LogBox.ignoreAllLogs(true);
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
