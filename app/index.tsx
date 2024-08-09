@@ -1,7 +1,7 @@
 // App.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Font from 'expo-font';
 import { Poppins_400Regular, Poppins_700Bold } from '@expo-google-fonts/poppins';
@@ -74,6 +74,12 @@ const HomePage: React.FC = () => {
         <TouchableOpacity style={styles.button} onPress={() => router.push('/LoadSessionPage')}>
           <Ionicons name="reload" size={24} color="black" />
           <Text style={styles.buttonText}>Load Session</Text>
+          <View style={styles.underline}></View>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={() => router.push('/testingGamma')}>
+          <Ionicons name="reload" size={24} color="black" />
+          <Text style={styles.buttonText}>Test</Text>
           <View style={styles.underline}></View>
         </TouchableOpacity>
       </View>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import TcpSocket from 'react-native-tcp-socket';
+import { NativeModules } from 'react-native';
 
 interface Vector3 {
   x: number;
@@ -117,6 +117,7 @@ const processSensorData = async (sessionName: string, rawData: Uint8Array): Prom
     const angularAccelY = (y2 - y1) / 0.001;
     const angularAccelZ = (z2 - z1) / 0.001;
 
+    console.log("X-Angular Acceleration: ", angularAccelX);
     angularAccels.push(Math.abs(angularAccelX), Math.abs(angularAccelY), Math.abs(angularAccelZ));
   }
 
@@ -172,31 +173,30 @@ export const fetchAndFormatSensorData = async (host: string, port: number): Prom
   }
 
   return new Promise((resolve, reject) => {
-    const client = TcpSocket.createConnection({ host, port }, () => {
-      client.write('GET / HTTP/1.1\r\n\r\n');
-    });
+    const startTime = new Date().getTime();
+    NativeModules.TcpSocket.sendDataToSocket(
+      host,
+      port.toString(),
+      'GET / HTTP/1.1\r\n\r\n',
+      async (error: any, response: any) => {
+        if (error) {
+          console.error('TCP connection error:', error);
+          reject(error);
+          return;
+        }
 
-    client.on('data', async (data: string | Buffer) => {
-      if (typeof data === 'string') {
-        console.error('Received data in unexpected format');
-        reject(new Error('Received data in unexpected format'));
-        return;
+        const endTime = new Date().getTime();
+        if ((endTime - startTime) / 1000 > 4) {
+          console.error('TCP connection timeout');
+          reject(new Error('TCP connection timeout'));
+          return;
+        }
+
+        const rawData = new Uint8Array(response);
+        const macDataMap = await processSensorData(currentSession, rawData);
+        const formattedData = formatMacData(macDataMap);
+        resolve(formattedData);
       }
-      const rawData = new Uint8Array(data.buffer);
-      const macDataMap = await processSensorData(currentSession, rawData);
-      const formattedData = formatMacData(macDataMap);
-      resolve(formattedData);
-      client.destroy();
-    });
-
-    client.on('error', (error) => {
-      console.error('TCP connection error:', error);
-      reject(error);
-      client.destroy();
-    });
-
-    client.on('close', () => {
-      console.log('Connection closed');
-    });
+    );
   });
 };
