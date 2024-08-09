@@ -29,6 +29,7 @@ const parseHtmlContent = (htmlText: string): string[] => {
 
 interface SensorData {
   accels: number[];
+  rotations: number[];
   lowaccels: number[];
   medaccels: number[];
   highaccels: number[];
@@ -109,45 +110,75 @@ const assignLevels = (data: SensorData) => {
     data.risk = "V. high";
   }
 };
+//first 3K bytes are the X,Y,Z acceleration from the first mac address, and the next 3K bytes are the X,Y,Z rotational acceleration from the first mac address, and then the subsequent 6K bytes follow the same pattern but for the second stored mac address.  the mac addresses of the devices are at the end of the message
 
-const processSensorData = async (sessionName: string, preContents: string[]): Promise<Record<string, SensorData>> => {
+const processSensorData = async (
+  sessionName: string,
+  rawData: Uint8Array
+): Promise<Record<string, SensorData>> => {
+  const numDevices = 2; // Define the number of devices here
   const macDataMap = await loadMacDataMap(sessionName);
   const macList = JSON.parse(await AsyncStorage.getItem(`${sessionName}_macList`) || '[]');
   const checkNetwork = await AsyncStorage.getItem('checkNetwork');
   const allowModification = checkNetwork !== 'no';
 
-  preContents.forEach(content => {
-    const macMatch = content.match(/Received sensor data from MAC: ([\w:]+)/);
-    const dataMatch = content.match(/Sensor data: ([\d.\s]+)/);
+  const macAddresses: string[] = [];
 
-    if (macMatch && dataMatch) {
-      const macAddress = macMatch[1];
-      const accels = dataMatch[1].trim().split(/\s+/).map(parseFloat); // Use parseFloat here
+  // Extract the MAC addresses from the end of the rawData
+  for (let i = 0; i < numDevices; i++) {
+    const macStartIndex = rawData.length - (6 * (numDevices - i));
+    const macAddress = Array.from(rawData.slice(macStartIndex, macStartIndex + 6))
+      .map(byte => byte.toString(16).padStart(2, '0')).join(':');
+    macAddresses.push(macAddress);
+  }
 
-      // Add MAC address to the list if not already present
-      if (!macList.includes(macAddress)) {
-        macList.push(macAddress);
-      }
+  const dataPerDevice = 6000; // 3K for acceleration + 3K for rotational acceleration
 
-      // Initialize new arrays if the MAC address is not already in the map
-      if (!macDataMap[macAddress]) {
-        macDataMap[macAddress] = {
-          accels: [],
-          lowaccels: [],
-          medaccels: [],
-          highaccels: [],
-        };
-      }
+  for (let deviceIndex = 0; deviceIndex < numDevices; deviceIndex++) {
+    const baseIndex = deviceIndex * dataPerDevice;
 
-      if (allowModification) {
-        // Append the new sensor data to the arrays
-        macDataMap[macAddress].accels.push(...accels);
+    const accels: number[] = [];
+    const angularAccels: number[] = [];
 
-        // Assign levels and calculate risk
-        assignLevels(macDataMap[macAddress]);
-      }
+    // Extract X, Y, Z acceleration data (first 3K bytes)
+    for (let i = baseIndex; i < baseIndex + 3000; i += 6) {
+      const x = rawData[i];
+      const y = rawData[i + 1];
+      const z = rawData[i + 2];
+      accels.push(Math.abs(x), Math.abs(y), Math.abs(z));
     }
-  });
+
+    // Extract X, Y, Z rotational acceleration data (next 3K bytes)
+    for (let i = baseIndex + 3000; i < baseIndex + 6000; i += 6) {
+      const x = rawData[i];
+      const y = rawData[i + 1];
+      const z = rawData[i + 2];
+      angularAccels.push(Math.abs(x), Math.abs(y), Math.abs(z));
+    }
+
+    const macAddress = macAddresses[deviceIndex];
+
+    if (!macList.includes(macAddress)) {
+      macList.push(macAddress);
+    }
+
+    if (!macDataMap[macAddress]) {
+      macDataMap[macAddress] = {
+        accels: [],
+        rotations: [],
+        lowaccels: [],
+        medaccels: [],
+        highaccels: [],
+      };
+    }
+
+    if (allowModification) {
+      macDataMap[macAddress].accels.push(...accels);
+      macDataMap[macAddress].accels.push(...angularAccels);
+
+      assignLevels(macDataMap[macAddress]);
+    }
+  }
 
   if (allowModification) {
     await saveMacDataMap(sessionName, macDataMap, macList);
@@ -156,7 +187,9 @@ const processSensorData = async (sessionName: string, preContents: string[]): Pr
   return macDataMap;
 };
 
-export type TeamDataRow = [string, number, number, number, string, number, number[]];
+
+
+export type TeamDataRow = [string, number, number, number, string, number, number[], number[]];
 
 const formatMacData = (macDataMap: Record<string, SensorData>): TeamDataRow[] => {
   return Object.entries(macDataMap).map(([mac, data]) => {
@@ -168,6 +201,7 @@ const formatMacData = (macDataMap: Record<string, SensorData>): TeamDataRow[] =>
       data.risk || "V. High",
       data.riskNum !== undefined ? data.riskNum : 100,
       data.accels,
+      data.rotations,
     ];
   });
 };
@@ -179,17 +213,48 @@ export const fetchAndFormatSensorData = async (url: string): Promise<TeamDataRow
     return [];
   }
 
-  // Step 1: Fetch the HTML page
-  const htmlText = await fetchHtmlPage(url);
+  // Step 1: Establish a WebSocket connection and fetch the binary data
+  const fetchWebSocketData = (): Promise<ArrayBuffer> => {
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket('ws://192.168.4.1:80/ws');
 
-  // Step 2: Parse the HTML content to extract the relevant text
-  const preContents = parseHtmlContent(htmlText);
+      ws.binaryType = 'arraybuffer';
 
-  // Step 3: Process the extracted text to build a map of MAC addresses to sensor data
-  const macDataMap = await processSensorData(currentSession, preContents);
+      ws.onopen = () => {
+        ws.send("getData"); // Request data from the server
+      };
 
-  // Step 4: Format the processed data into the desired format
-  const formattedData = formatMacData(macDataMap);
+      ws.onmessage = (event) => {
+        resolve(event.data as ArrayBuffer);
+        ws.close(); // Close the WebSocket connection after receiving data
+      };
 
-  return formattedData;
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        reject(error);
+        ws.close();
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket connection closed');
+      };
+    });
+  };
+
+  try {
+    // Fetch binary data from WebSocket
+    const rawDataBuffer = await fetchWebSocketData();
+    const rawData = new Uint8Array(rawDataBuffer);
+
+    // Step 2: Process the binary data to build a map of MAC addresses to sensor data
+    const macDataMap = await processSensorData(currentSession, rawData);
+
+    // Step 3: Format the processed data into the desired format
+    const formattedData = formatMacData(macDataMap);
+
+    return formattedData;
+  } catch (error) {
+    console.error('Error fetching or processing data:', error);
+    return [];
+  }
 };

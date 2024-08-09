@@ -27,6 +27,7 @@ const loadMacDataMap = async (sessionName: string): Promise<Record<string, Senso
   }
 };
 
+
 const saveMacDataMap = async (sessionName: string, macDataMap: Record<string, SensorData>, macList: string[]) => {
   const checkNetwork = await AsyncStorage.getItem('checkNetwork');
   if (checkNetwork === 'no') {
@@ -40,6 +41,8 @@ const saveMacDataMap = async (sessionName: string, macDataMap: Record<string, Se
     console.error('Error saving data to AsyncStorage:', error);
   }
 };
+
+
 
 const assignLevels = (data: SensorData) => {
   data.lowaccels = [];
@@ -148,6 +151,11 @@ const processSensorData = async (sessionName: string, rawData: Uint8Array): Prom
 
   return macDataMap;
 };
+
+
+
+
+
 
 export type TeamDataRow = [string, number, number, number, string, number, number[]];
 
