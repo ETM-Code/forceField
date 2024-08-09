@@ -149,12 +149,30 @@ const processSensorData = async (
       accels.push(Math.abs(x), Math.abs(y), Math.abs(z));
     }
 
-    // Extract X, Y, Z rotational acceleration data (next 3K bytes)
+    let prevX = null;
+    let prevY = null;
+    let prevZ = null;
+
+    const timeInterval = 1 / 6667; // Time interval between each reading
+
     for (let i = baseIndex + 3000; i < baseIndex + 6000; i += 6) {
       const x = rawData[i];
       const y = rawData[i + 1];
       const z = rawData[i + 2];
-      angularAccels.push(Math.abs(x), Math.abs(y), Math.abs(z));
+
+      if (prevX !== null && prevY !== null && prevZ !== null) {
+        // Calculate acceleration for each axis
+        const accelX = Math.abs((x - prevX) / timeInterval);
+        const accelY = Math.abs((y - prevY) / timeInterval);
+        const accelZ = Math.abs((z - prevZ) / timeInterval);
+
+        angularAccels.push(accelX, accelY, accelZ);
+      }
+
+      // Update previous velocity values
+      prevX = x;
+      prevY = y;
+      prevZ = z;
     }
 
     const macAddress = macAddresses[deviceIndex];
