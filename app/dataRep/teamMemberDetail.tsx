@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Dimensions, StyleSheet, Button } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import { RootStackParamList } from './NavigationTypes';
+import { RootStackParamList } from '../unused/NavigationTypes';
 import { useSensorData } from '@/context/SensorDataContext';
 import { TeamDataRow } from '@/scripts/fetchTeamDataBeta';
 import TeamMember from '@/components/teamMember';
