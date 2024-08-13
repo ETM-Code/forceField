@@ -66,22 +66,22 @@ const HomePage: React.FC = () => {
       <Image source={BackgroundImage} style={styles.backgroundImage} />
       <Image source={LogoImage} style={styles.logo} />
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={() => router.push('/StartSessionPage')}>
+        <TouchableOpacity style={styles.button} onPress={() => router.push('/intermediaries/StartSessionPage')}>
           <Ionicons name="play" size={24} color="black" />
           <Text style={styles.buttonText}>Start Session</Text>
           <View style={styles.underline}></View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => router.push('/LoadSessionPage')}>
+        <TouchableOpacity style={styles.button} onPress={() => router.push('/intermediaries/LoadSessionPage')}>
           <Ionicons name="reload" size={24} color="black" />
           <Text style={styles.buttonText}>Load Session</Text>
           <View style={styles.underline}></View>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={() => router.push('/testingGamma')}>
+{/* 
+        <TouchableOpacity style={styles.button} onPress={() => router.push('/unused/testingGamma')}>
           <Ionicons name="reload" size={24} color="black" />
           <Text style={styles.buttonText}>Test</Text>
           <View style={styles.underline}></View>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );

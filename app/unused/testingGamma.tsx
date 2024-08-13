@@ -2,27 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { Text, View, ScrollView, StyleSheet } from 'react-native';
 import * as Network from 'expo-network';
 import { Buffer } from 'buffer'; // Import Buffer
+import CRC32 from 'crc-32'; // Import CRC-32 for checksum validation
 
-const parseBinaryData = (data: ArrayBuffer, macCount: number, messageSize: number, addLog: (message: string) => void) => {
+const parseBinaryData = (data: Uint8Array, macCount: number, messageSize: number, addLog: (message: string) => void) => {
   const messages: any[] = [];
-  const dataView = new DataView(data);
-  const totalMessagesSize = messageSize * macCount;
 
-  for (let i = 0; i < macCount; i++) {
-    const macAddressOffset = totalMessagesSize + i * 6;
-    const macBytes = [];
-    for (let j = 0; j < 6; j++) {
-      macBytes.push(dataView.getUint8(macAddressOffset + j));
-    }
+
+    const macBytes = Array.from(data.slice(0, 6));
     const macAddress = macBytes.map(b => b.toString(16).padStart(2, '0')).join(':');
     addLog(`Parsed MAC Address: ${macAddress}`);
     addLog(`Message Size: ${messageSize}`);
-    const messageBytes = new Uint8Array(data.slice(i * messageSize, (i + 1) * messageSize));
-    const messageData = Buffer.from(messageBytes).toString('utf-8'); // Use Buffer to decode UTF-8
+    const messageBytes = data.slice(7, messageSize);
+    const messageData = Array.from(messageBytes).map(byte => byte.toString()).join(','); // Use Buffer to decode UTF-8
     messages.push({ macAddress, messageData });
-  }
+
 
   return messages;
+};
+
+const verifyReceivedData = (dataWithChecksum: Uint8Array): boolean => {
+  const dataSize = dataWithChecksum.length - 4;  // Subtract 4 bytes for checksum
+  const data = dataWithChecksum.slice(0, dataSize);  // Extract data part
+  const receivedChecksumArray = dataWithChecksum.slice(dataSize);  // Extract checksum part
+
+  // Reconstruct the received checksum from the last 4 bytes
+  const receivedChecksum = (
+    (receivedChecksumArray[0] << 24) |
+    (receivedChecksumArray[1] << 16) |
+    (receivedChecksumArray[2] << 8) |
+    receivedChecksumArray[3]
+  ) >>> 0;  // Unsigned right shift to ensure it's a 32-bit unsigned integer
+
+  // Calculate the checksum of the received data
+  const calculatedChecksum = CRC32.buf(data);
+
+  // Compare the received checksum with the calculated checksum
+  return receivedChecksum === calculatedChecksum;
 };
 
 const WebSocketClient = () => {
@@ -69,18 +84,26 @@ const WebSocketClient = () => {
 
         ws.onmessage = (event) => {
           addLog('Message received from server');
-          const data = event.data as ArrayBuffer;
-          const macCount = 5; // Number of MAC addresses/messages
-          const messageSize = 6000; // Size of each message
-          const parsedMessages = parseBinaryData(data, macCount, messageSize, addLog);
+          const dataWithChecksum = new Uint8Array(event.data as ArrayBuffer);
 
-          if (parsedMessages.length > 0 && parsedMessages[0].macAddress) {
-            const firstMessage = parsedMessages[0];
-            if(firstMessage){
-              addLog(`Displaying message: ${firstMessage.messageData}`);
-              setDisplayMessage(`${firstMessage.macAddress}: Message Number 1: ${firstMessage.messageData}`);
+          // if (verifyReceivedData(dataWithChecksum)) {
+            addLog('Data checksum verified successfully');
+            const data = dataWithChecksum.slice(0, -4); // Remove checksum bytes
+            const macCount = 1; // Number of MAC addresses/messages
+            const messageSize = 6400; // Size of each message
+            const parsedMessages = parseBinaryData(data, macCount, messageSize, addLog);
+
+            if (parsedMessages.length > 0 && parsedMessages[0].macAddress) {
+              const firstMessage = parsedMessages[0];
+              if (firstMessage) {
+                addLog(`Displaying message: ${firstMessage.messageData}`);
+                setDisplayMessage(`${firstMessage.macAddress}: Message Number 1: ${firstMessage.messageData}`);
+              }
             }
-          }
+          // } 
+          // else {
+          //   addLog('Data checksum verification failed');
+          // }
         };
 
         ws.onerror = (error) => {

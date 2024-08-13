@@ -58,7 +58,7 @@ export default function LoadSessionPage() {
     if (session) {
       await AsyncStorage.setItem('currentSession', sessionName);
       await AsyncStorage.setItem(`${sessionName}_macList`, JSON.stringify(session.macList)); // Ensure macList is set
-      router.push('/teamPage?historical=true');
+      router.push('/dataRep/teamPage?historical=true');
     }
   };
 

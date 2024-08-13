@@ -50,6 +50,7 @@ const TeamMemberDetail: React.FC = () => {
     getHistoricalData();
   }, [historical, playerName]);
 
+  if(!historical){
   useEffect(() => {
     const updateData = () => {
       const memberData = teamData.find(row => row[0] === playerName);
@@ -72,7 +73,7 @@ const TeamMemberDetail: React.FC = () => {
 
     // Clear interval on component unmount
     return () => clearInterval(intervalId);
-  }, [teamData, playerName]);
+  }, [teamData, playerName]);}
 
   const toggleDataSet = () => {
     setShowGyroscope(prevState => !prevState);
@@ -105,6 +106,52 @@ const TeamMemberDetail: React.FC = () => {
       </View>
     );
   }
+  const filteredData = dataToDisplay.slice(-12000).filter(value => value !== 0);
+  const filteredLabels = dataToDisplay
+  .slice(-12000)
+  .map((value, index) => {
+    if (value !== 0 && index % 1000 === 0) {
+      return `#${Math.floor(index / 3) + 1}`;
+    } else {
+      return ''; // Empty string for labels not to be rendered
+    }
+  })
+  .filter(label => label !== null);
+
+  const chartData = {
+    labels: filteredLabels,
+    datasets: [
+      {
+        data: filteredData,
+        color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`, // White line
+        strokeWidth: 2, // Optional line width
+      },
+    ],
+  };
+
+  const chartConfig = {
+    backgroundGradientFrom: 'yellow',
+    backgroundGradientTo: 'red',
+    backgroundGradientFromOpacity: 1,
+    backgroundGradientToOpacity: 1,
+    useShadowColorFromDataset: false, // Removes the semi-transparent fill under the line
+    decimalPlaces: 2, // Optional, defaults to 2dp
+    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`, // White labels
+    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+    style: {
+      borderRadius: 16,
+    },
+    propsForBackgroundLines: {
+      stroke: 'transparent', // Makes the background lines invisible
+    },
+    propsForDots: {
+      r: '0.1',
+      strokeWidth: '0.1',
+      stroke: '#ffffff',
+    },
+    yLabelsOffset: 0, // Adjust this value to move labels further from the edge
+    formatYLabel: (yLabel: string) => (parseFloat(yLabel) / 1000).toString(),
+  };
 
   return (
     <View style={styles.container}>
@@ -124,43 +171,22 @@ const TeamMemberDetail: React.FC = () => {
         )}
       </View>
       <Button title={`Show ${showGyroscope ? 'Acceleration' : 'Gyroscope'} Values`} onPress={toggleDataSet} />
-      <ScrollView className='bg-slate-800 p-4 m-2'>
-        <View>
-          {/* Table Header */}
-          <View style={{ flexDirection: 'row', marginBottom: 10 }}>
-            <Text style={{ flex: 1, fontWeight: 'bold', color: 'white' }}>Value Number</Text>
-            <Text style={{ flex: 1, fontWeight: 'bold', color: 'white' }}>X</Text>
-            <Text style={{ flex: 1, fontWeight: 'bold', color: 'white' }}>Y</Text>
-            <Text style={{ flex: 1, fontWeight: 'bold', color: 'white' }}>Z</Text>
-          </View>
 
-          {/* Table Rows */}
-          {dataToDisplay
-            .filter(value => value !== 0)
-            .map((value, index, array) => {
-              const setNumber = Math.floor(index / 3) + 1;
-              const colIndex = index % 3;
+      {/* Replace the ScrollView and table with the LineChart */}
+      <LineChart
+        data={chartData}
+        width={screenWidth - 50} // Width of the chart
+        height={220} // Height of the chart
+        chartConfig={chartConfig}
+        style={{
+          marginVertical: 8,
+          borderRadius: 16,
+          paddingLeft: 20, // Add padding to the left to make room for y-axis labels
+        }}
+      />
 
-              // Create rows for each set of 3 values
-              if (colIndex === 0) {
-                return (
-                  <View key={setNumber} style={{ flexDirection: 'row', marginBottom: 5 }}>
-                    <Text style={{ flex: 1, color: 'white' }}>{setNumber}</Text>
-                    <Text style={{ flex: 1, color: 'white' }}>{array[index]}</Text>
-                    <Text style={{ flex: 1, color: 'white' }}>{array[index + 1]}</Text>
-                    <Text style={{ flex: 1, color: 'white' }}>{array[index + 2]}</Text>
-                  </View>
-                );
-              }
-              return null; // Skip non-start indices in the set
-            })}
-        </View>
-        <Text className='text-white p-10'>
-          {showGyroscope ? 'Gyroscope Values: ' : 'Acceleration Values: '}
-          {dataToDisplay.filter(value => value !== 0).join(', ')}
-        </Text>
-        <View className='py-80'></View>
-      </ScrollView>
+      {/* Padding for layout adjustment */}
+      <View style={{ paddingBottom: 80 }}></View>
     </View>
   );
 };
@@ -188,6 +214,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     margin: 10,
     padding: 10,
+    paddingLeft: 30,
     backgroundColor: '#1A1A1A',
     borderRadius: 10,
   },

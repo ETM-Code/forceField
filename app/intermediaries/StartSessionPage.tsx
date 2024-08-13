@@ -37,7 +37,7 @@ export default function StartSessionPage() {
         if (existingSessions === null) {
           await AsyncStorage.setItem('sessions', JSON.stringify([]));
         } else if (currentSession) {
-          router.push('/teamPage');
+          router.push('/dataRep/teamPage');
         }
 
         const previousSessions = await AsyncStorage.getItem('previousSessions');
@@ -69,7 +69,7 @@ export default function StartSessionPage() {
       await AsyncStorage.setItem('currentSession', newSessionName);
       existingSessions.push(newSessionName);
       await AsyncStorage.setItem('sessions', JSON.stringify(existingSessions));
-      router.push('/teamPage');
+      router.push('/dataRep/teamPage');
     } catch (error) {
       setError('Error saving session name. Please try again.');
     }

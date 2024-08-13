@@ -41,10 +41,10 @@ export default function RootLayout() {
       <SensorDataProvider>
         <Stack >
           <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="teamPage" options={{ headerShown: false }} />
-          <Stack.Screen name="StartSessionPage" options={{ headerShown: false }} />
-          <Stack.Screen name="LoadSessionPage" options={{ headerShown: false }} />
-          <Stack.Screen name="teamMemberDetail"/>
+          <Stack.Screen name="dataRep/teamPage" options={{ headerShown: false }} />
+          <Stack.Screen name="intermediaries/StartSessionPage" options={{ headerShown: false }} />
+          <Stack.Screen name="intermediaries/LoadSessionPage" options={{ headerShown: false }} />
+          <Stack.Screen name="dataRep/teamMemberDetail" options={{ headerShown: false }}/>
         </Stack>
       </SensorDataProvider>
     </ThemeProvider>

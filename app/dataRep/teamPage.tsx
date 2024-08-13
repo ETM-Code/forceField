@@ -94,7 +94,7 @@ export default function Page() {
     if (previousSession) {
       await AsyncStorage.setItem('currentSession', previousSession);
     }
-    router.push('/LoadSessionPage');
+    router.push('/intermediaries/LoadSessionPage');
   };
 
   return (

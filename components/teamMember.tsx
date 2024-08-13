@@ -17,7 +17,7 @@ const TeamMember: React.FC<TeamMemberProps> = ({ playerName, number1, number2, n
   const handlePress = () => {
     console.log(accels);
     router.push({
-      pathname: '/teamMemberDetail',
+      pathname: '/dataRep/teamMemberDetail',
       params: { playerName, accels },
     });
   };

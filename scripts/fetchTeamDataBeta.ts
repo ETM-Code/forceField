@@ -6,6 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const DOMParser = require('react-native-html-parser').DOMParser;
 import CRC32 from 'crc-32';
 
+AsyncStorage.clear();
+
 interface SensorData {
   accels: number[];
   rotations: number[];
@@ -71,13 +73,13 @@ const assignLevels = (data: SensorData) => {
     data.riskNum = trueRisk;
 
   // Classify the risk values into different levels
-  if(data.riskNums){
-  data.riskNums.forEach(value => {
-    if (value > 35.9 && value < 46.5) {
+  if(data.accels){
+  data.accels.forEach(value => {
+    if (value > 2 && value < 6) {
       data.lowaccels.push(value);
-    } else if (value >= 46.5 && value < 52.0) {
+    } else if (value >= 6 && value < 12) {
       data.medaccels.push(value);
-    } else if (value >= 52.0) {
+    } else if (value >= 18) {
       data.highaccels.push(value);
     }
   });
@@ -88,13 +90,14 @@ const assignLevels = (data: SensorData) => {
   // Assign risk based on riskNum
   if (data.riskNum < 10) {
     data.risk = "Low";
-  } else if (data.riskNum < 25 && data.riskNum>10) {
-    data.risk = "Med";
-  } else if (data.riskNum < 60 && data.riskNum>25) {
-    data.risk = "High";
-  } else if (data.riskNum > 60){
-    data.risk = "V. high";
-  }
+  } 
+  // else if (data.riskNum < 25 && data.riskNum>10) {
+  //   data.risk = "Med";
+  // } else if (data.riskNum < 60 && data.riskNum>25) {
+  //   data.risk = "High";
+  // } else if (data.riskNum > 60){
+  //   data.risk = "V. high";
+  // }
   else {data.risk = "Low";}
 };
 //first 3K bytes are the X,Y,Z acceleration from the first mac address, and the next 3K bytes are the X,Y,Z rotational acceleration from the first mac address, and then the subsequent 6K bytes follow the same pattern but for the second stored mac address.  the mac addresses of the devices are at the end of the message
@@ -110,6 +113,11 @@ const processSensorData = async (
   const allowModification = checkNetwork !== 'no';
 
   const intMacAddress = Array.from(rawData.slice(0,6));
+
+  if (intMacAddress.every(byte => byte === 0)) {
+    return {}; // Exit the function if all elements are zero
+  }
+
   let macAddress: string = "";
 
   // Extract the MAC addresses from the end of the rawData
@@ -120,10 +128,29 @@ const processSensorData = async (
 
   const dataPerDevice = 6400; // 3.2K for acceleration + 3.2K for rotational acceleration
 
-  const rawDataAccel = rawData.slice(7, 3207);
-  const accels = Array.from(rawDataAccel);
-  const rawDataGyro = rawData.slice(3207,6407);
+  // Start slicing after the 7th element
+  let offset = 8;
+  const accels: number[] = [];
+  const rawDataGyroArr: number[] = [];
   const angularAccels: number[] = [];
+
+  // We loop until we reach the end of the relevant portion of the array (6407)
+  while (offset < 6407) {
+    // Slice the next 117 values for accelerometer data
+    const rawDataAccel = rawData.slice(offset, offset + 117);
+    accels.push(...Array.from(rawDataAccel));
+
+    // Update offset to skip over the 117 accel values
+    offset += 117;
+
+    // Slice the next 117 values for gyroscope data
+    const rawDataGyro = rawData.slice(offset, offset + 117);
+    rawDataGyroArr.push(...Array.from(rawDataGyro));
+
+    // Update offset to skip over the 117 gyro values
+    offset += 117;
+  }
+
 
   let prevX: number | null = null;
   let prevY: number | null = null;
@@ -132,12 +159,12 @@ const processSensorData = async (
   const timeInterval = 1 / 3200; // Time interval between each reading
 
 // Iterate over the sliced rawDataGyro array, processing in chunks of 3 values (x, y, z)
-  rawDataGyro.forEach((value, index) => {
+  rawDataGyroArr.forEach((value, index) => {
     if (index % 3 === 0) {
       // If we're at the start of a new set of (x, y, z), extract these values
-      const x = rawDataGyro[index];
-      const y = rawDataGyro[index + 1];
-      const z = rawDataGyro[index + 2];
+      const x = rawDataGyroArr[index]*100;
+      const y = rawDataGyroArr[index + 1]*100;
+      const z = rawDataGyroArr[index + 2]*100;
 
       if (prevX !== null && prevY !== null && prevZ !== null) {
         // Calculate acceleration for each axis
@@ -195,7 +222,7 @@ const formatMacData = (macDataMap: Record<string, SensorData>): TeamDataRow[] =>
       data.medaccels.length,
       data.highaccels.length,
       data.risk || "Low",
-      data.riskNum !== undefined ? data.riskNum : 100,
+      data.riskNum !== undefined ? data.riskNum : 0,
       data.accels,
       data.rotations,
     ];
@@ -265,7 +292,7 @@ export const fetchAndFormatSensorData = async (url: string): Promise<TeamDataRow
     const rawDataWithChecksum = new Uint8Array(rawDataBuffer);
     const rawData = rawDataWithChecksum.slice(0,-4);
 
-    if(verifyReceivedData(rawDataWithChecksum)){
+    // if(verifyReceivedData(rawDataWithChecksum)){
 
     // Step 2: Process the binary data to build a map of MAC addresses to sensor data
     const macDataMap = await processSensorData(currentSession, rawData);
@@ -274,11 +301,12 @@ export const fetchAndFormatSensorData = async (url: string): Promise<TeamDataRow
     const formattedData = formatMacData(macDataMap);
 
     return formattedData;}
-    else{
-      console.error('Data is corrupted');
-      return [];
-    }
-  } catch (error) {
+    // else{
+    //   console.error('Data is corrupted');
+    //   return [];
+    // }
+  // }
+   catch (error) {
     console.error('Error fetching or processing data:', error);
     return [];
   }
