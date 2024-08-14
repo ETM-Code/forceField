@@ -6,7 +6,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const DOMParser = require('react-native-html-parser').DOMParser;
 import CRC32 from 'crc-32';
 
-AsyncStorage.clear();
 
 interface SensorData {
   accels: number[];
@@ -75,11 +74,11 @@ const assignLevels = (data: SensorData) => {
   // Classify the risk values into different levels
   if(data.accels){
   data.accels.forEach(value => {
-    if (value > 2 && value < 6) {
+    if (value > 2 && value < 100) {
       data.lowaccels.push(value);
-    } else if (value >= 6 && value < 12) {
+    } else if (value >= 100 && value < 10000) {
       data.medaccels.push(value);
-    } else if (value >= 18) {
+    } else if (value >= 10000) {
       data.highaccels.push(value);
     }
   });
@@ -137,14 +136,14 @@ const processSensorData = async (
   // We loop until we reach the end of the relevant portion of the array (6407)
   while (offset < 6407) {
     // Slice the next 117 values for accelerometer data
-    const rawDataAccel = rawData.slice(offset, offset + 117);
-    accels.push(...Array.from(rawDataAccel));
+    const rawDataAccel = rawData.slice(offset, offset + 117).filter(value => value !== 0);
+    accels.push(...Array.from(rawDataAccel).filter(value => value !== 0));
 
     // Update offset to skip over the 117 accel values
     offset += 117;
 
     // Slice the next 117 values for gyroscope data
-    const rawDataGyro = rawData.slice(offset, offset + 117);
+    const rawDataGyro = rawData.slice(offset, offset + 117).filter(value => value !== 0);
     rawDataGyroArr.push(...Array.from(rawDataGyro));
 
     // Update offset to skip over the 117 gyro values
@@ -152,34 +151,44 @@ const processSensorData = async (
   }
 
 
-  let prevX: number | null = null;
-  let prevY: number | null = null;
-  let prevZ: number | null = null;
+  let prevAV: number | null = null;
+  // let prevX: number | null = null;
+  // let prevY: number | null = null;
+  // let prevZ: number | null = null;
   
   const timeInterval = 1 / 3200; // Time interval between each reading
 
 // Iterate over the sliced rawDataGyro array, processing in chunks of 3 values (x, y, z)
   rawDataGyroArr.forEach((value, index) => {
-    if (index % 3 === 0) {
-      // If we're at the start of a new set of (x, y, z), extract these values
-      const x = rawDataGyroArr[index]*100;
-      const y = rawDataGyroArr[index + 1]*100;
-      const z = rawDataGyroArr[index + 2]*100;
+    const aV = rawDataGyroArr[index];
 
-      if (prevX !== null && prevY !== null && prevZ !== null) {
-        // Calculate acceleration for each axis
-        const accelX = Math.abs((x - prevX) / timeInterval);
-        const accelY = Math.abs((y - prevY) / timeInterval);
-        const accelZ = Math.abs((z - prevZ) / timeInterval);
-
-        angularAccels.push(accelX, accelY, accelZ);
-      }
-
-      // Update previous values
-      prevX = x;
-      prevY = y;
-      prevZ = z;
+    if (prevAV !== null){
+      const accelA = Math.abs((aV - prevAV) / timeInterval);
+      angularAccels.push(accelA);
     }
+
+    prevAV = aV;
+
+    // if (index % 3 === 0) {
+    //   // If we're at the start of a new set of (x, y, z), extract these values
+    //   const x = rawDataGyroArr[index]*100;
+    //   const y = rawDataGyroArr[index + 1]*100;
+    //   const z = rawDataGyroArr[index + 2]*100;
+
+    //   // if (prevX !== null && prevY !== null && prevZ !== null) {
+    //   //   // Calculate acceleration for each axis
+    //   //   const accelX = Math.abs((x - prevX) / timeInterval);
+    //   //   const accelY = Math.abs((y - prevY) / timeInterval);
+    //   //   const accelZ = Math.abs((z - prevZ) / timeInterval);
+
+    //   //   angularAccels.push(accelX, accelY, accelZ);
+    //   // }
+
+    //   // // Update previous values
+    //   // prevX = x;
+    //   // prevY = y;
+    //   // prevZ = z;
+    // }
   });
 
   if (!macList.includes(macAddress)) {

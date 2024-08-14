@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Dimensions, StyleSheet, Button } from 'react-native';
+import { View, Text, ScrollView, Dimensions, StyleSheet, Button, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '../unused/NavigationTypes';
@@ -97,7 +98,8 @@ const TeamMemberDetail: React.FC = () => {
 
   const displayData = historical ? historicalAccelerationData : accelerationData;
   const displayMemberData = historical ? historicalData : memberData;
-  const dataToDisplay = displayMemberData ? (showGyroscope ? displayMemberData[7] : displayMemberData[6]) : null;
+  const dataToDisplay = displayMemberData ? (displayMemberData[6]) : null;
+  const dataToDisplayG = displayMemberData ? (displayMemberData[6]) : null;
 
   if (!dataToDisplay || dataToDisplay.length === 0) {
     return (
@@ -106,6 +108,21 @@ const TeamMemberDetail: React.FC = () => {
       </View>
     );
   }
+
+  const filteredDataG = dataToDisplay.slice(-12000).filter(value => value !== 0);
+  const filteredLabelsG = dataToDisplay
+  .slice(-12000)
+  .map((value, index) => {
+    if (value !== 0 && index % 1000 === 0) {
+      return `#${Math.floor(index / 3) + 1}`;
+    } else {
+      return ''; // Empty string for labels not to be rendered
+    }
+  })
+  .filter(label => label !== null);
+
+
+
   const filteredData = dataToDisplay.slice(-12000).filter(value => value !== 0);
   const filteredLabels = dataToDisplay
   .slice(-12000)
@@ -123,6 +140,17 @@ const TeamMemberDetail: React.FC = () => {
     datasets: [
       {
         data: filteredData,
+        color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`, // White line
+        strokeWidth: 2, // Optional line width
+      },
+    ],
+  };
+
+  const chartDataG = {
+    labels: filteredLabelsG,
+    datasets: [
+      {
+        data: filteredDataG,
         color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`, // White line
         strokeWidth: 2, // Optional line width
       },
@@ -153,9 +181,44 @@ const TeamMemberDetail: React.FC = () => {
     formatYLabel: (yLabel: string) => (parseFloat(yLabel) / 1000).toString(),
   };
 
+
+  const chartConfigGyro = {
+    backgroundGradientFrom: 'green',
+    backgroundGradientTo: 'blue',
+    backgroundGradientFromOpacity: 1,
+    backgroundGradientToOpacity: 1,
+    useShadowColorFromDataset: false, // Removes the semi-transparent fill under the line
+    decimalPlaces: 2, // Optional, defaults to 2dp
+    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`, // White labels
+    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+    style: {
+      borderRadius: 16,
+    },
+    propsForBackgroundLines: {
+      stroke: 'transparent', // Makes the background lines invisible
+    },
+    propsForDots: {
+      r: '0.1',
+      strokeWidth: '0.1',
+      stroke: '#ffffff',
+    },
+    yLabelsOffset: 0, // Adjust this value to move labels further from the edge
+    formatYLabel: (yLabel: string) => (parseFloat(yLabel) / 1000).toString(),
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
+        <TouchableOpacity
+          style={styles.homeButton}
+          onPress={() => { 
+              router.push('/dataRep/teamPage');
+          }}
+        >
+          <Ionicons name={historical ? "arrow-back" : "home"} size={24} color="black" />
+        </TouchableOpacity>
+        {/* <Text style={styles.headerText}>{sessionName || 'Your Team'}</Text> */}
+        <View style={styles.homeButtonPlaceholder} />
         <Text style={styles.headerText}>{playerName}</Text>
       </View>
       <View style={styles.chartContainer}>
@@ -170,11 +233,23 @@ const TeamMemberDetail: React.FC = () => {
           />
         )}
       </View>
-      <Button title={`Show ${showGyroscope ? 'Acceleration' : 'Gyroscope'} Values`} onPress={toggleDataSet} />
+      {/* <Button title={`Show ${showGyroscope ? 'Acceleration' : 'Gyroscope'} Values`} onPress={toggleDataSet} /> */}
 
       {/* Replace the ScrollView and table with the LineChart */}
       <LineChart
         data={chartData}
+        width={screenWidth - 50} // Width of the chart
+        height={220} // Height of the chart
+        chartConfig={chartConfig}
+        style={{
+          marginVertical: 8,
+          borderRadius: 16,
+          paddingLeft: 20, // Add padding to the left to make room for y-axis labels
+        }}
+      />
+
+      <LineChart
+        data={chartDataG}
         width={screenWidth - 50} // Width of the chart
         height={220} // Height of the chart
         chartConfig={chartConfig}
@@ -228,6 +303,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#E0E0E0',
   },
+  homeButton: {
+    padding: 10,
+  },
+  homeButtonPlaceholder: {
+    width: 24, // to align the center text properly
+  }
 });
 
 export default TeamMemberDetail;
