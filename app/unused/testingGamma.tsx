@@ -4,7 +4,8 @@ import * as Network from 'expo-network';
 import { Buffer } from 'buffer'; // Import Buffer
 import CRC32 from 'crc-32'; // Import CRC-32 for checksum validation
 
-const parseBinaryData = (data: Uint8Array, macCount: number, messageSize: number, addLog: (message: string) => void) => {
+
+const parseBinaryData = (data: number[], macCount: number, messageSize: number, addLog: (message: string) => void) => {
   const messages: any[] = [];
 
 
@@ -12,7 +13,7 @@ const parseBinaryData = (data: Uint8Array, macCount: number, messageSize: number
     const macAddress = macBytes.map(b => b.toString(16).padStart(2, '0')).join(':');
     addLog(`Parsed MAC Address: ${macAddress}`);
     addLog(`Message Size: ${messageSize}`);
-    const messageBytes = data.slice(7, messageSize);
+    const messageBytes = data.slice(7, messageSize).filter(value => value!=0);
     const messageData = Array.from(messageBytes).map(byte => byte.toString()).join(','); // Use Buffer to decode UTF-8
     messages.push({ macAddress, messageData });
 
@@ -20,7 +21,7 @@ const parseBinaryData = (data: Uint8Array, macCount: number, messageSize: number
   return messages;
 };
 
-const verifyReceivedData = (dataWithChecksum: Uint8Array): boolean => {
+const verifyReceivedData = (dataWithChecksum: number[]): boolean => {
   const dataSize = dataWithChecksum.length - 4;  // Subtract 4 bytes for checksum
   const data = dataWithChecksum.slice(0, dataSize);  // Extract data part
   const receivedChecksumArray = dataWithChecksum.slice(dataSize);  // Extract checksum part
@@ -84,11 +85,13 @@ const WebSocketClient = () => {
 
         ws.onmessage = (event) => {
           addLog('Message received from server');
-          const dataWithChecksum = new Uint8Array(event.data as ArrayBuffer);
+          const dataString = event.data as string;
+          const data = dataString.split(',').map(value => parseFloat(value));
+          // const dataWithChecksum = new Uint8Array(event.data as ArrayBuffer);
 
           // if (verifyReceivedData(dataWithChecksum)) {
             addLog('Data checksum verified successfully');
-            const data = dataWithChecksum.slice(0, -4); // Remove checksum bytes
+            // const data = dataWithChecksum.slice(0, -4); // Remove checksum bytes
             const macCount = 1; // Number of MAC addresses/messages
             const messageSize = 6400; // Size of each message
             const parsedMessages = parseBinaryData(data, macCount, messageSize, addLog);
@@ -97,7 +100,7 @@ const WebSocketClient = () => {
               const firstMessage = parsedMessages[0];
               if (firstMessage) {
                 addLog(`Displaying message: ${firstMessage.messageData}`);
-                setDisplayMessage(`${firstMessage.macAddress}: Message Number 1: ${firstMessage.messageData}`);
+                // setDisplayMessage(`${firstMessage.macAddress}: Message Number 1: ${firstMessage.messageData}`);
               }
             }
           // } 
@@ -166,7 +169,7 @@ const styles = StyleSheet.create({
   },
   logContainer: {
     marginTop: 20,
-    maxHeight: 200, // Limit the height of the log container
+    maxHeight: 250, // Limit the height of the log container
   },
   logText: {
     fontSize: 12,

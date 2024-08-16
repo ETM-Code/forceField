@@ -76,12 +76,12 @@ const HomePage: React.FC = () => {
           <Text style={styles.buttonText}>Load Session</Text>
           <View style={styles.underline}></View>
         </TouchableOpacity>
-{/* 
+
         <TouchableOpacity style={styles.button} onPress={() => router.push('/unused/testingGamma')}>
           <Ionicons name="reload" size={24} color="black" />
           <Text style={styles.buttonText}>Test</Text>
           <View style={styles.underline}></View>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
     </View>
   );

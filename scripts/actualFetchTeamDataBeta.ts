@@ -3,6 +3,7 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+const DOMParser = require('react-native-html-parser').DOMParser;
 import CRC32 from 'crc-32';
 
 
@@ -140,15 +141,17 @@ const processSensorData = async (
   const checkNetwork = await AsyncStorage.getItem('checkNetwork');
   const allowModification = checkNetwork !== 'no';
 
+  const intMacAddress = Array.from(rawData.slice(0,6));
+
   // if (intMacAddress.every(byte => byte === 0)) {
   //   return {}; // Exit the function if all elements are zero
   // }
 
-  const macAddress: string = "9C:9E:6E:02:E4:7C";
+  let macAddress: string = "";
 
   // Extract the MAC addresses from the end of the rawData
 
-
+    macAddress = intMacAddress.map(byte => byte.toString(16).padStart(2, '0')).join(':');
 
   if(rawData.length<100){
     return(macDataMap)
@@ -157,35 +160,36 @@ const processSensorData = async (
   const dataPerDevice = 6400; // 3.2K for acceleration + 3.2K for rotational acceleration
 
   // Start slicing after the 7th element
+  let offset = 7;
   const linAccels: number[] = [];
   const rawDataGyroArr: number[] = [];
   const angularAccels: number[] = [];
 
   // We loop until we reach the end of the relevant portion of the array (6407)
-  
+  while (offset < 6407) {
     // Slice the next 117 values for accelerometer data
-    const rawDataAccel = rawData.slice(6, 3206).filter(value => value !== 0 && !isNaN(value) && isFinite(value));
+    const rawDataAccel = rawData.slice(offset, offset + 117).filter(value => !isNaN(value) && isFinite(value));
     linAccels.push(
       ...Array.from(rawDataAccel)
-      .filter(value => value !== 0 && !isNaN(value) && isFinite(value))
+      // .filter(value => value !== 0)
     );
 
     // Update offset to skip over the 117 accel values
-
+    offset += 117;
 
     // Slice the next 117 values for gyroscope data
-    const rawDataGyro = rawData.slice(3206, 6406).filter(value => value !== 0 && !isNaN(value) && isFinite(value));
+    const rawDataGyro = rawData.slice(offset, offset + 117).filter(value => value !== 0);
     const rawDataGyroArray = Array.from(rawDataGyro);
     const filteredGyro = filterSequence(rawDataGyroArray, sequenceToFilter);
     const doubleFilteredGyro = filterSequence(filteredGyro, sequence2Filter)
     rawDataGyroArr.push(
       ...Array.from(doubleFilteredGyro)
-      .filter(value => value !== 0 && !isNaN(value) && isFinite(value))
+      .filter(value => value !== 0)
     );
 
     // Update offset to skip over the 117 gyro values
-
-  
+    offset += 117;
+  }
 
 
   let prevAV: number | null = null;
@@ -244,11 +248,10 @@ const processSensorData = async (
 
     if (allowModification) {
       macDataMap[macAddress].accels.push(...linAccels);
-      linAccels.forEach((value, index) => {
-      macDataMap[macAddress].rotations.push(0);
-      });
+      macDataMap[macAddress].rotations.push(...angularAccels);
+
       assignLevels(macDataMap[macAddress]);
-    };
+    }
 
   if (allowModification) {
     await saveMacDataMap(sessionName, macDataMap, macList);

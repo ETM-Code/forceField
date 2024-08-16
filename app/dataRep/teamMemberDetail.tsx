@@ -35,6 +35,7 @@ const TeamMemberDetail: React.FC = () => {
         const sessionData = previousSessions.find((session: any) => session.sessionName === currentSession);
         if (sessionData) {
           const memberData = sessionData.data.find((row: TeamDataRow) => row[0] === playerName);
+          console.log(memberData[6]);
           if (memberData) {
             const validAccels = memberData[6].filter((value: any) => !isNaN(value) && isFinite(value));
             setHistoricalData(memberData);
@@ -83,6 +84,14 @@ const TeamMemberDetail: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.waitingContainer}>
+        <TouchableOpacity
+          style={styles.homeButton}
+          onPress={() => {
+            router.push('/dataRep/teamPage')
+          }}
+        >
+          <Ionicons name={historical ? "arrow-back" : "home"} size={24} color="white" />
+        </TouchableOpacity>
         <Text style={styles.waitingText}>Waiting for data...</Text>
       </View>
     );
@@ -91,49 +100,73 @@ const TeamMemberDetail: React.FC = () => {
   if (error) {
     return (
       <View style={styles.waitingContainer}>
+        <TouchableOpacity
+          style={styles.homeButton}
+          onPress={() => {
+            router.push('/dataRep/teamPage')
+          }}
+        >
+          <Ionicons name={historical ? "arrow-back" : "home"} size={24} color="white" />
+        </TouchableOpacity>
         <Text style={styles.waitingText}>{error}</Text>
       </View>
     );
   }
 
+
   const displayData = historical ? historicalAccelerationData : accelerationData;
   const displayMemberData = historical ? historicalData : memberData;
-  const dataToDisplay = displayMemberData ? (displayMemberData[6]) : null;
-  const dataToDisplayG = displayMemberData ? (displayMemberData[6]) : null;
+  const dataToDisplay = displayMemberData ? (displayMemberData[6]) : [0, 0, 0, 0];
+  const dataToDisplayG = displayMemberData ? (displayMemberData[7]) : [0, 0, 0, 0];
 
   if (!dataToDisplay || dataToDisplay.length === 0) {
     return (
       <View style={styles.waitingContainer}>
+        <TouchableOpacity
+          style={styles.homeButton}
+          onPress={() => {
+            router.push('/dataRep/teamPage')
+          }}
+        >
+          <Ionicons name={historical ? "arrow-back" : "home"} size={24} color="white" />
+        </TouchableOpacity>
         <Text style={styles.waitingText}>No data available for {showGyroscope ? 'gyroscope' : 'acceleration'} values.</Text>
       </View>
     );
   }
 
-  const filteredDataG = dataToDisplay.slice(-12000).filter(value => value !== 0);
-  const filteredLabelsG = dataToDisplay
-  .slice(-12000)
+
+// Add a null check for dataToDisplayG before slicing and filtering
+  let filteredDataG: number[] = [];
+  let filteredLabelsG: string[] = [];
+
+  if (dataToDisplayG && dataToDisplayG.length > 0) {
+   filteredDataG = dataToDisplayG.slice(-100);
+   filteredLabelsG = dataToDisplayG
+  .slice(-100)
   .map((value, index) => {
-    if (value !== 0 && index % 1000 === 0) {
-      return `#${Math.floor(index / 3) + 1}`;
+    if (value !== 0 && index % 10 === 0) {
+      return `${index}`;
     } else {
       return ''; // Empty string for labels not to be rendered
     }
   })
   .filter(label => label !== null);
+}
 
 
-
-  const filteredData = dataToDisplay.slice(-12000).filter(value => value !== 0);
+  const filteredData = dataToDisplay.slice(-100);
   const filteredLabels = dataToDisplay
-  .slice(-12000)
+  .slice(-100)
   .map((value, index) => {
-    if (value !== 0 && index % 1000 === 0) {
-      return `#${Math.floor(index / 3) + 1}`;
+    if (value !== 0 && index % 10 === 0) {
+      return `${index}`;
     } else {
       return ''; // Empty string for labels not to be rendered
     }
   })
   .filter(label => label !== null);
+
 
   const chartData = {
     labels: filteredLabels,
@@ -158,7 +191,7 @@ const TeamMemberDetail: React.FC = () => {
   };
 
   const chartConfig = {
-    backgroundGradientFrom: 'yellow',
+    backgroundGradientFrom: 'orange',
     backgroundGradientTo: 'red',
     backgroundGradientFromOpacity: 1,
     backgroundGradientToOpacity: 1,
@@ -177,8 +210,6 @@ const TeamMemberDetail: React.FC = () => {
       strokeWidth: '0.1',
       stroke: '#ffffff',
     },
-    yLabelsOffset: 0, // Adjust this value to move labels further from the edge
-    formatYLabel: (yLabel: string) => (parseFloat(yLabel) / 1000).toString(),
   };
 
 
@@ -202,20 +233,18 @@ const TeamMemberDetail: React.FC = () => {
       strokeWidth: '0.1',
       stroke: '#ffffff',
     },
-    yLabelsOffset: 0, // Adjust this value to move labels further from the edge
-    formatYLabel: (yLabel: string) => (parseFloat(yLabel) / 1000).toString(),
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <TouchableOpacity
+      <TouchableOpacity
           style={styles.homeButton}
-          onPress={() => { 
-              router.push('/dataRep/teamPage');
+          onPress={() => {
+            router.push('/dataRep/teamPage')
           }}
         >
-          <Ionicons name={historical ? "arrow-back" : "home"} size={24} color="black" />
+          <Ionicons name={historical ? "arrow-back" : "home"} size={24} color="white" />
         </TouchableOpacity>
         {/* <Text style={styles.headerText}>{sessionName || 'Your Team'}</Text> */}
         <View style={styles.homeButtonPlaceholder} />
@@ -236,29 +265,42 @@ const TeamMemberDetail: React.FC = () => {
       {/* <Button title={`Show ${showGyroscope ? 'Acceleration' : 'Gyroscope'} Values`} onPress={toggleDataSet} /> */}
 
       {/* Replace the ScrollView and table with the LineChart */}
+      <Text style={styles.headerText}>Linear Acceleration Values: </Text>
       <LineChart
         data={chartData}
-        width={screenWidth - 50} // Width of the chart
+        yAxisLabel="  "
+       yAxisSuffix=""
+        yAxisInterval={1}
+        width={screenWidth} // Width of the chart
         height={220} // Height of the chart
         chartConfig={chartConfig}
         style={{
           marginVertical: 8,
           borderRadius: 16,
-          paddingLeft: 20, // Add padding to the left to make room for y-axis labels
+          paddingLeft: 0, // Add padding to the left to make room for y-axis labels
+          paddingRight: 0,
         }}
       />
-
+      {/* <ScrollView style={styles.scrollView}>
+      {filteredData.map((value, index) => (
+        <Text key={index} style={styles.dataText}>
+          {value}
+        </Text>
+      ))}
+    </ScrollView> */}
+      {/* <Text style={styles.headerText}>Angular Acceleration Values: </Text>
       <LineChart
         data={chartDataG}
         width={screenWidth - 50} // Width of the chart
         height={220} // Height of the chart
-        chartConfig={chartConfig}
+        chartConfig={chartConfigGyro}
         style={{
           marginVertical: 8,
           borderRadius: 16,
           paddingLeft: 20, // Add padding to the left to make room for y-axis labels
+          paddingRight: 20,
         }}
-      />
+      /> */}
 
       {/* Padding for layout adjustment */}
       <View style={{ paddingBottom: 80 }}></View>
@@ -271,6 +313,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#242424',
     padding: 10,
+    paddingTop: 50,
+  },
+  scrollView: {
+    marginVertical: 20,
+    maxHeight: 200,  // Adjust this as needed to control the height of the ScrollView
+  },
+  dataText: {
+    fontSize: 16,
+    color: '#E0E0E0',
+    padding: 5,
   },
   headerContainer: {
     margin: 10,
