@@ -55,9 +55,9 @@ const assignLevels = (data: SensorData) => {
     
   
     data.accels.forEach(value => {
-      if (value > 20) {
+      if (value > 30) {
         let riskValue;
-        if (value < 89) {
+        if (value < 890) {
           riskValue = -0.0004 * Math.pow(value, 3) + 0.0631 * Math.pow(value, 2) - 2.1851 * value + 21.545;
         } else {
           riskValue = 100;
@@ -76,11 +76,11 @@ const assignLevels = (data: SensorData) => {
   // Classify the risk values into different levels
   if(data.accels){
   data.accels.forEach(value => {
-    if (value > 2 && value < 100) {
+    if (value > 30 && value < 50) {
       data.lowaccels.push(value);
-    } else if (value >= 100 && value < 10000) {
+    } else if (value >= 50 && value < 80) {
       data.medaccels.push(value);
-    } else if (value >= 10000) {
+    } else if (value >= 80) {
       data.highaccels.push(value);
     }
   });
@@ -297,6 +297,93 @@ function verifyReceivedData(dataWithChecksum: Uint8Array): boolean {
   return receivedChecksum === calculatedChecksum;
 }
 
+class WebSocketManager {
+  private static instance: WebSocketManager | null = null;
+  private ws: WebSocket | null = null;
+  private dataCallback: ((data: number[]) => void) | null = null;
+  private isConnecting: boolean = false;
+  private url: string;
+
+  private constructor(url: string) {
+    this.url = url;
+    this.connect();
+  }
+
+  public static getInstance(url: string): WebSocketManager {
+    if (!WebSocketManager.instance) {
+      WebSocketManager.instance = new WebSocketManager(url);
+    }
+    return WebSocketManager.instance;
+  }
+
+  private connect() {
+    if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.OPEN)) {
+      return;
+    }
+
+    this.isConnecting = true;
+    this.ws = new WebSocket(this.url);
+    this.ws.binaryType = 'arraybuffer';
+
+    this.ws.onopen = () => {
+      console.log('WebSocket connection opened');
+      this.isConnecting = false;
+    };
+
+    this.ws.onmessage = (event) => {
+      const data = event.data as string;
+      const numberArray = data.split(',').map(value => parseFloat(value));
+      if (this.dataCallback) {
+        this.dataCallback(numberArray);
+        this.dataCallback = null;
+      }
+    };
+
+    this.ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      this.isConnecting = false;
+    };
+
+    this.ws.onclose = () => {
+      console.log('WebSocket connection closed');
+      this.isConnecting = false;
+      // Attempt to reconnect after a delay
+      setTimeout(() => this.connect(), 5000);
+    };
+  }
+
+  public getData(): Promise<number[]> {
+    return new Promise((resolve, reject) => {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        this.connect();
+      }
+
+      const timeout = setTimeout(() => {
+        this.dataCallback = null;
+        reject(new Error('WebSocket getData request timed out'));
+      }, 10000);  // 10 second timeout
+
+      this.dataCallback = (data: number[]) => {
+        clearTimeout(timeout);
+        resolve(data);
+      };
+
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send("getData");
+      } else {
+        reject(new Error('WebSocket is not open'));
+      }
+    });
+  }
+
+  public close() {
+    if (this.ws) {
+      this.ws.close();
+    }
+  }
+}
+
+const wsManager = WebSocketManager.getInstance('ws://192.168.4.1:80/ws');
 
 export const fetchAndFormatSensorData = async (url: string): Promise<TeamDataRow[]> => {
   const currentSession = await AsyncStorage.getItem('currentSession');
@@ -306,58 +393,19 @@ export const fetchAndFormatSensorData = async (url: string): Promise<TeamDataRow
   }
 
   // Step 1: Establish a WebSocket connection and fetch the binary data
-  const fetchWebSocketData = (): Promise<number[]> => {
-    return new Promise((resolve, reject) => {
-      const ws = new WebSocket('ws://192.168.4.1:80/ws');
-
-      ws.binaryType = 'arraybuffer';
-
-      ws.onopen = () => {
-        ws.send("getData"); // Request data from the server
-      };
-
-      ws.onmessage = (event) => {
-        const data = event.data as string;
   
-        // Assuming the data is received as a string like "0,0,1,2,3,1"
-        const numberArray = data.split(',').map(value => parseFloat(value));
-  
-        resolve(numberArray); // Resolve with the parsed number array
-        ws.close(); // Close the WebSocket connection after receiving data
-      };
-  
+  // Create a single instance of WebSocketManager
 
-      ws.onerror = (error) => {
-        // console.error('WebSocket error:', error);
-        // reject(error);
-        ws.close();
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket connection closed');
-      };
-    });
-  };
+  
+  // In fetchAndFormatSensorData function:
+  const rawDataBuffer = await wsManager.getData();
 
   try {
-    // Fetch binary data from WebSocket
-    const rawDataBuffer = await fetchWebSocketData();
-
-    // if(verifyReceivedData(rawDataWithChecksum)){
-
-    // Step 2: Process the binary data to build a map of MAC addresses to sensor data
+    const rawDataBuffer = await wsManager.getData();
     const macDataMap = await processSensorData(currentSession, rawDataBuffer);
-
-    // Step 3: Format the processed data into the desired format
     const formattedData = formatMacData(macDataMap);
-
-    return formattedData;}
-    // else{
-    //   console.error('Data is corrupted');
-    //   return [];
-    // }
-  // }
-   catch (error) {
+    return formattedData;
+  } catch (error) {
     console.error('Error fetching or processing data:', error);
     return [];
   }

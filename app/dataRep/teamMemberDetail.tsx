@@ -71,7 +71,7 @@ const TeamMemberDetail: React.FC = () => {
     updateData();
 
     // Set up interval for updating data
-    const intervalId = setInterval(updateData, 1000); // Update every second
+    const intervalId = setInterval(updateData, 2000); // Update every second
 
     // Clear interval on component unmount
     return () => clearInterval(intervalId);
@@ -277,8 +277,8 @@ const TeamMemberDetail: React.FC = () => {
         style={{
           marginVertical: 8,
           borderRadius: 16,
-          paddingLeft: 0, // Add padding to the left to make room for y-axis labels
-          paddingRight: 0,
+          paddingLeft: 40, // Add padding to the left to make room for y-axis labels
+          paddingRight: 40,
         }}
       />
       {/* <ScrollView style={styles.scrollView}>
