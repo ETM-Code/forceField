@@ -60,7 +60,7 @@ const TeamMemberDetail: React.FC = () => {
       };
 
       updateData();
-      const intervalId = setInterval(updateData, 50);
+      const intervalId = setInterval(updateData, 500);
 
       return () => clearInterval(intervalId);
     }
@@ -115,7 +115,7 @@ const TeamMemberDetail: React.FC = () => {
 
   displayData.forEach((value, index) => {
     const x = (index / displayData.length) * screenWidth;
-    const y = 50 - value; // Adjust as per your y-axis scaling
+    const y = 250 - value; // Adjust as per your y-axis scaling
     path.lineTo(x, y);
   });
 
