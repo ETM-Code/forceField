@@ -57,7 +57,7 @@ export const SensorDataProvider: React.FC<SensorDataProviderProps> = ({ children
     };
 
     fetchData();
-    const intervalId = setInterval(fetchData, 3100);
+    const intervalId = setInterval(fetchData, 310);
 
     return () => clearInterval(intervalId);
   }, []);
