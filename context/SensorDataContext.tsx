@@ -51,13 +51,13 @@ export const SensorDataProvider: React.FC<SensorDataProviderProps> = ({ children
           setLoading(false);
         }
       } catch (error) {
-        // console.error('Error fetching team data:', error);
+        console.error('Error fetching team data:', error);
         setLoading(false);
       }
     };
-
+~
     fetchData();
-    const intervalId = setInterval(fetchData, 3100);
+    const intervalId = setInterval(fetchData, 500);
 
     return () => clearInterval(intervalId);
   }, []);
