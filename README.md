@@ -1,50 +1,26 @@
-# Welcome to your Expo app 👋
+# ForceField
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile app for real-time concussion detection in hurling, built as part of the [Patch](https://patch.ie/) programme.
 
-## Get started
+ForceField connects to ESP-32 mesh network sensors embedded in hurling helmets (see [ESP-Now-Node](https://github.com/ETM-Code/ESP-Now-Node)) and displays accelerometer data in real-time, helping coaches and medical staff monitor impact forces during training and matches.
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+- Real-time accelerometer data display from helmet sensors
+- Session recording and playback
+- Team management with per-player monitoring
+- Impact event detection and alerts
 
-2. Start the app
+## Tech Stack
 
-   ```bash
-    npx expo start
-   ```
+- **React Native** (Expo) with TypeScript
+- **NativeWind** (Tailwind CSS for React Native)
+- File-based routing via Expo Router
+- AsyncStorage for session persistence
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Getting Started
 
 ```bash
-npm run reset-project
+bun install
+bunx expo start
 ```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
