@@ -18,3 +18,30 @@ web-build/
 
 expo-env.d.ts
 # @end expo-cli
+
+# --- added by pre-wipe preflight; safe to delete later ---
+.venv/
+venv/
+.venv-dev/
+node_modules/
+__pycache__/
+*.py[cod]
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+target/
+.next/
+.turbo/
+.parcel-cache/
+*.pack
+*.safetensors
+*.gguf
+*.ckpt
+*.pt
+*.pth
+*.bin.zst
+.DS_Store
+# --- end preflight block ---
